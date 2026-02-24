@@ -1,6 +1,7 @@
 // src/components/ReviewerHome.js
 import { useState, useEffect, useCallback } from "react";
 import { getSuggestions, getQCDSMT, getOwners, reviewSuggestion, updateSuggestionStatus } from "../services/data";
+import SubmitForm from "./SubmitForm";
 
 const STATUS_COLORS = {
   New: "#94a3b8", "Under Review": "#6366f1", Approved: "#3b82f6",
@@ -107,6 +108,19 @@ function ReviewerHome({ user }) {
     </div>;
   }
 
+  // --- SUBMIT SUGGESTION ---
+  if (view === "submit") {
+    return (
+      <div className="page">
+        <SubmitForm
+          user={user}
+          onBack={() => setView("home")}
+          onSuccess={loadData}
+        />
+      </div>
+    );
+  }
+
   // --- HOME ---
   if (view === "home") {
     return (
@@ -137,6 +151,12 @@ function ReviewerHome({ user }) {
         </div>
 
         <div className="action-cards">
+          <button className="action-card action-submit" onClick={() => setView("submit")}>
+            <span className="action-icon">💡</span>
+            <span className="action-title">Submit Suggestion</span>
+            <span className="action-desc">Share your own idea to improve SFL</span>
+          </button>
+
           <button className="action-card action-review" onClick={() => setView("queue")}>
             <span className="action-icon">📥</span>
             <span className="action-title">Review Queue</span>

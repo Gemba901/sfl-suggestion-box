@@ -1,6 +1,7 @@
 // src/components/Dashboard.js
 import { useState, useEffect, useCallback } from "react";
 import { getSuggestions, getQCDSMT } from "../services/data";
+import SubmitForm from "./SubmitForm";
 
 const STATUS_COLORS = {
   New: "#94a3b8", "Under Review": "#6366f1", Approved: "#3b82f6",
@@ -14,6 +15,7 @@ const QCDSMT_COLORS = {
 
 function Dashboard({ user }) {
   const [tab, setTab] = useState("overview");
+  const [showSubmit, setShowSubmit] = useState(false);
   const [allSuggestions, setAllSuggestions] = useState([]);
   const [qcdsmt, setQcdsmt] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,6 +40,19 @@ function Dashboard({ user }) {
       <div style={{ fontSize: 32 }}>⏳</div>
       <p>Loading dashboard...</p>
     </div>;
+  }
+
+  // --- SUBMIT SUGGESTION ---
+  if (showSubmit) {
+    return (
+      <div className="page">
+        <SubmitForm
+          user={user}
+          onBack={() => setShowSubmit(false)}
+          onSuccess={loadData}
+        />
+      </div>
+    );
   }
 
   const today = new Date().toISOString().split("T")[0];
@@ -74,6 +89,14 @@ function Dashboard({ user }) {
         <p className="text-muted">Here's your operations overview</p>
       </div>
 
+      {/* Submit Suggestion Button */}
+      <button className="action-card action-submit" onClick={() => setShowSubmit(true)} style={{ marginBottom: 16, width: "100%" }}>
+        <span className="action-icon">💡</span>
+        <span className="action-title">Submit Suggestion</span>
+        <span className="action-desc">Share your own idea to improve SFL</span>
+      </button>
+
+      {/* KPI Tiles */}
       <div className="kpi-grid">
         <div className="kpi-card">
           <div className="kpi-icon">📋</div>
@@ -107,6 +130,7 @@ function Dashboard({ user }) {
         </div>
       </div>
 
+      {/* Tabs */}
       <div className="tab-bar">
         {[
           { k: "overview", l: "Overview" },
