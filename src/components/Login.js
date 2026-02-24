@@ -1,6 +1,8 @@
 // src/components/Login.js
 import { useState } from "react";
 import { loginUser } from "../services/data";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 
 function Login({ onLogin }) {
   const [name, setName] = useState("");
@@ -51,12 +53,14 @@ function Login({ onLogin }) {
 
           <div className="form-group">
             <label>Phone Number</label>
-            <input
-              type="tel"
-              placeholder="e.g. 254717000001"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="form-input"
+            <PhoneInput
+  country={"ke"}                     // default Kenya (+254 + flag)
+  value={phone}
+  onChange={(value) => setPhone(value)}  // gives digits like 254717000001
+  enableSearch
+  countryCodeEditable={false}
+  inputStyle={{ width: "100%" }}
+/>
             />
           </div>
 
