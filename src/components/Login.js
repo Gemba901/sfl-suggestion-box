@@ -33,7 +33,7 @@ function Login({ onLogin }) {
   return (
     <div className="login-page">
       <div className="login-card">
-        <div className="login-logo">📋</div>
+        <img src="/sfl-logo.png" alt="SFL" className="login-logo-img" />
         <h1 className="login-title">SFL Suggestion Box</h1>
         <p className="login-subtitle">Making SFL better, one idea at a time</p>
 

@@ -569,3 +569,18 @@ body {
   .review-info-card { grid-template-columns: 1fr; }
   .bar-label { width: 80px; font-size: 11px; }
 }
+/* --- LOGO STYLES --- */
+.header-logo-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  object-fit: contain;
+}
+
+.login-logo-img {
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  object-fit: contain;
+  margin-bottom: 12px;
+}
