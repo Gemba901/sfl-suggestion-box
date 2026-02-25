@@ -69,7 +69,7 @@ function App() {
     <div className="app">
       <header className="app-header">
         <div className="header-left">
-          <span className="header-logo">📋</span>
+          <img src="/sfl-logo.png" alt="SFL" className="header-logo-img" />
           <div>
             <div className="header-title">SFL Suggestion Box</div>
             <div className="header-role">{user.role} • {user.name}</div>
