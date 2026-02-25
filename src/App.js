@@ -1,53 +1,97 @@
 // src/App.js
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Login from "./components/Login";
 import EmployeeHome from "./components/EmployeeHome";
 import ReviewerHome from "./components/ReviewerHome";
 import Dashboard from "./components/Dashboard";
+import NotificationBell, { NotificationToast } from "./components/NotificationBell";
+import {
+  requestBrowserPermission,
+  subscribeToNewSuggestions,
+  subscribeToStatusChanges,
+  subscribeToAllStatusChanges,
+  unsubscribeAll,
+} from "./services/notifications";
 import "./App.css";
 
 function App() {
   const [user, setUser] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [toast, setToast] = useState(null);
 
-  function handleLogin(userData) {
-    setUser(userData);
-  }
+  // Add a notification to the list + show toast
+  const addNotification = useCallback((notif) => {
+    const withTime = {
+      ...notif,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+    setNotifications((prev) => [withTime, ...prev].slice(0, 20)); // Keep last 20
+    setToast(withTime);
+    setTimeout(() => setToast(null), 4000); // Auto-dismiss after 4 seconds
+  }, []);
+
+  // Setup realtime subscriptions when user logs in
+  useEffect(() => {
+    if (!user) return;
+
+    // Request browser notification permission
+    requestBrowserPermission();
+
+    // Subscribe based on role
+    if (user.role === "Reviewer" || user.role === "Management") {
+      // Reviewers/Management get notified of new suggestions
+      subscribeToNewSuggestions(addNotification);
+      // They also get notified if THEIR suggestions get reviewed
+      subscribeToAllStatusChanges(user.name, addNotification);
+    } else {
+      // Employees get notified when their suggestions are reviewed
+      subscribeToStatusChanges(user.name, addNotification);
+    }
+
+    // Cleanup on logout
+    return () => {
+      unsubscribeAll();
+    };
+  }, [user, addNotification]);
 
   function handleLogout() {
+    unsubscribeAll();
+    setNotifications([]);
+    setToast(null);
     setUser(null);
   }
 
-  // Not logged in — show login
   if (!user) {
-    return <Login onLogin={handleLogin} />;
+    return <Login onLogin={setUser} />;
   }
 
-  // Logged in — show the right screen based on role
   return (
     <div className="app">
-      {/* Header */}
       <header className="app-header">
         <div className="header-left">
-          <img src="/sfl-logo.png" alt="SFL" className="header-logo-img" />
+          <span className="header-logo">📋</span>
           <div>
             <div className="header-title">SFL Suggestion Box</div>
-            <div className="header-role">
-              {user.role === "Employee" && "👷 Employee"}
-              {user.role === "Reviewer" && "📋 Reviewer"}
-              {user.role === "Management" && "📊 Management"}
-              {" • "}{user.name}
-            </div>
+            <div className="header-role">{user.role} • {user.name}</div>
           </div>
         </div>
-        <button className="btn-logout" onClick={handleLogout}>Logout</button>
+        <div className="header-right">
+          <NotificationBell
+            notifications={notifications}
+            onClear={() => setNotifications([])}
+          />
+          <button className="btn-logout" onClick={handleLogout}>Logout</button>
+        </div>
       </header>
 
-      {/* Content based on role */}
-      <main className="app-content">
+      {/* Toast notification */}
+      <NotificationToast notification={toast} onDismiss={() => setToast(null)} />
+
+      <div className="app-content">
         {user.role === "Employee" && <EmployeeHome user={user} />}
         {user.role === "Reviewer" && <ReviewerHome user={user} />}
         {user.role === "Management" && <Dashboard user={user} />}
-      </main>
+      </div>
     </div>
   );
 }

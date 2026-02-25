@@ -110,8 +110,9 @@ export async function getNextId() {
   return "SUG-001";
 }
 
-// Submit a new suggestion (Employee)
-export async function submitSuggestion(user, area, problem, suggestion) {
+// Submit a new suggestion (Employee/Reviewer/Management)
+// employeeImpact = the QCDSMT code the employee chose, or "" if "I'm not sure"
+export async function submitSuggestion(user, area, problem, suggestion, employeeImpact) {
   const newId = await getNextId();
   const { data, error } = await supabase
     .from("suggestions")
@@ -122,6 +123,7 @@ export async function submitSuggestion(user, area, problem, suggestion) {
       area: area,
       problem: problem,
       suggestion: suggestion,
+      primary_impact: employeeImpact || "",
       status: "New",
     })
     .select()

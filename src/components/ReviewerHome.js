@@ -9,6 +9,14 @@ const STATUS_COLORS = {
   Implementing: "#8b5cf6", Implemented: "#10b981", Closed: "#374151",
 };
 
+const QCDSMT_LABELS = {
+  Q: "Quality", C: "Cost", D: "Delivery", S: "Safety", M: "Morale", T: "Technology",
+};
+
+const QCDSMT_COLORS = {
+  Q: "#2563eb", C: "#059669", D: "#d97706", S: "#dc2626", M: "#7c3aed", T: "#0891b2",
+};
+
 function ReviewerHome({ user }) {
   const [view, setView] = useState("home");
   const [selectedSuggestion, setSelectedSuggestion] = useState(null);
@@ -199,6 +207,16 @@ function ReviewerHome({ user }) {
                 <div className="suggestion-area">{s.area} • {s.employeeName} • {s.submittedDate}</div>
                 <div className="suggestion-problem"><strong>Problem:</strong> {s.problem}</div>
                 <div className="suggestion-text"><strong>Suggestion:</strong> {s.suggestion}</div>
+                {s.primaryImpact && (
+                  <div className="employee-qcdsmt-hint">
+                    💬 Employee thinks this is: <strong style={{ color: QCDSMT_COLORS[s.primaryImpact] }}>{s.primaryImpact} — {QCDSMT_LABELS[s.primaryImpact]}</strong>
+                  </div>
+                )}
+                {!s.primaryImpact && (
+                  <div className="employee-qcdsmt-hint" style={{ color: "#94a3b8" }}>
+                    💬 Employee wasn't sure about QCDSMT classification
+                  </div>
+                )}
                 <div className="tap-hint">Tap to review →</div>
               </div>
             ))}
@@ -309,6 +327,20 @@ function ReviewerHome({ user }) {
 
         <form onSubmit={handleReview} className="form-card">
           <h3 className="form-section-title">A) QCDSMT Classification</h3>
+
+          {/* Show employee's original choice */}
+          {s.primaryImpact ? (
+            <div className="employee-choice-banner">
+              💬 <strong>{s.employeeName}</strong> classified this as:
+              <span className="qcdsmt-dot" style={{ background: QCDSMT_COLORS[s.primaryImpact], marginLeft: 6 }}>{s.primaryImpact}</span>
+              <strong style={{ color: QCDSMT_COLORS[s.primaryImpact] }}>{QCDSMT_LABELS[s.primaryImpact]}</strong>
+              <span style={{ color: "#94a3b8", fontSize: 12 }}> — you can confirm or change below</span>
+            </div>
+          ) : (
+            <div className="employee-choice-banner" style={{ borderColor: "#f59e0b30", background: "#fffbeb" }}>
+              ❓ <strong>{s.employeeName}</strong> wasn't sure about the classification — please classify below
+            </div>
+          )}
 
           <div className="form-group">
             <label>Primary Impact <span className="required">*</span></label>
