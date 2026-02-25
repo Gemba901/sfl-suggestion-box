@@ -15,6 +15,7 @@ function SubmitForm({ user, onBack, onSuccess }) {
   const [error, setError] = useState("");
   const [areas, setAreas] = useState([]);
   const [qcdsmt, setQcdsmt] = useState([]);
+  const QCDSMT_ORDER = ["Q", "C", "D", "S", "M", "T"];
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -114,7 +115,7 @@ function SubmitForm({ user, onBack, onSuccess }) {
           <p className="form-hint">Select the area your idea impacts most. Not sure? That's okay — just pick "I'm not sure" and the reviewer will classify it.</p>
 
           <div className="qcdsmt-submit-grid">
-            {qcdsmt.map((q) => (
+            {[...qcdsmt].sort((a, b) => QCDSMT_ORDER.indexOf(a.code) - QCDSMT_ORDER.indexOf(b.code)).map((q) => (
               <button
                 type="button"
                 key={q.code}
