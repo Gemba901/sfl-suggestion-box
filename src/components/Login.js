@@ -61,7 +61,6 @@ function Login({ onLogin }) {
   countryCodeEditable={false}
   inputStyle={{ width: "100%" }}
 />
-            />
           </div>
 
           {error && <div className="form-error">{error}</div>}
