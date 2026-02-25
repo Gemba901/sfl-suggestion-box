@@ -16,6 +16,7 @@ const QCDSMT_COLORS = {
 function Dashboard({ user }) {
   const [tab, setTab] = useState("overview");
   const [showSubmit, setShowSubmit] = useState(false);
+  const [showMine, setShowMine] = useState(false);
   const [allSuggestions, setAllSuggestions] = useState([]);
   const [qcdsmt, setQcdsmt] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +41,39 @@ function Dashboard({ user }) {
       <div style={{ fontSize: 32 }}>⏳</div>
       <p>Loading dashboard...</p>
     </div>;
+  }
+
+  // --- MY SUGGESTIONS ---
+  if (showMine) {
+    const mine = allSuggestions.filter((s) => s.employeeName === user.name);
+    return (
+      <div className="page">
+        <button className="btn-back" onClick={() => setShowMine(false)}>← Back</button>
+        <h2 className="page-title">📋 My Suggestions ({mine.length})</h2>
+        {mine.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">📭</div>
+            <p>You haven't submitted any suggestions yet.</p>
+            <button className="btn-primary" onClick={() => { setShowMine(false); setShowSubmit(true); }}>Submit One Now</button>
+          </div>
+        ) : (
+          <div className="suggestion-list">
+            {mine.map((s) => (
+              <div key={s.id} className="suggestion-card">
+                <div className="suggestion-header">
+                  <span className="suggestion-id">{s.id}</span>
+                  <span className="status-badge" style={{ background: (STATUS_COLORS[s.status] || "#94a3b8") + "18", color: STATUS_COLORS[s.status] || "#94a3b8" }}>{s.status}</span>
+                </div>
+                <div className="suggestion-area">{s.area} • {s.submittedDate}</div>
+                <div className="suggestion-problem"><strong>Problem:</strong> {s.problem}</div>
+                <div className="suggestion-text"><strong>Suggestion:</strong> {s.suggestion}</div>
+                {s.reviewerComment && <div className="reviewer-comment"><strong>Reviewer:</strong> {s.reviewerComment}</div>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
   }
 
   // --- SUBMIT SUGGESTION ---
@@ -89,12 +123,19 @@ function Dashboard({ user }) {
         <p className="text-muted">Here's your operations overview</p>
       </div>
 
-      {/* Submit Suggestion Button */}
-      <button className="action-card action-submit" onClick={() => setShowSubmit(true)} style={{ marginBottom: 16, width: "100%" }}>
-        <span className="action-icon">💡</span>
-        <span className="action-title">Submit Suggestion</span>
-        <span className="action-desc">Share your own idea to improve SFL</span>
-      </button>
+      {/* Action buttons */}
+      <div className="action-cards" style={{ marginBottom: 16 }}>
+        <button className="action-card action-submit" onClick={() => setShowSubmit(true)}>
+          <span className="action-icon">💡</span>
+          <span className="action-title">Submit Suggestion</span>
+          <span className="action-desc">Share your own idea to improve SFL</span>
+        </button>
+        <button className="action-card action-view" onClick={() => setShowMine(true)}>
+          <span className="action-icon">📋</span>
+          <span className="action-title">My Suggestions</span>
+          <span className="action-desc">Track your own submitted ideas</span>
+        </button>
+      </div>
 
       {/* KPI Tiles */}
       <div className="kpi-grid">
@@ -230,7 +271,29 @@ function Dashboard({ user }) {
           </div>
         </div>
       )}
-
+{tab === "mine" && (
+        <div className="suggestion-list">
+          {allSuggestions.filter((s) => s.employeeName === user.name).length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-icon">📭</div>
+              <p>You haven't submitted any suggestions yet.</p>
+            </div>
+          ) : (
+            allSuggestions.filter((s) => s.employeeName === user.name).map((s) => (
+              <div key={s.id} className="suggestion-card">
+                <div className="suggestion-header">
+                  <span className="suggestion-id">{s.id}</span>
+                  <span className="status-badge" style={{ background: (STATUS_COLORS[s.status] || "#94a3b8") + "18", color: STATUS_COLORS[s.status] || "#94a3b8" }}>{s.status}</span>
+                </div>
+                <div className="suggestion-area">{s.area} • {s.submittedDate}</div>
+                <div className="suggestion-problem"><strong>Problem:</strong> {s.problem}</div>
+                <div className="suggestion-text"><strong>Suggestion:</strong> {s.suggestion}</div>
+                {s.reviewerComment && <div className="reviewer-comment"><strong>Reviewer:</strong> {s.reviewerComment}</div>}
+              </div>
+            ))
+          )}
+        </div>
+      )}
       {tab === "all" && (
         <div className="suggestion-list">
           {allSuggestions.map((s) => (

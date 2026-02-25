@@ -165,6 +165,12 @@ function ReviewerHome({ user }) {
             <span className="action-desc">Share your own idea to improve SFL</span>
           </button>
 
+          <button className="action-card action-view" onClick={() => setView("my")}>
+            <span className="action-icon">📋</span>
+            <span className="action-title">My Suggestions</span>
+            <span className="action-desc">Track your own submitted ideas</span>
+          </button>
+
           <button className="action-card action-review" onClick={() => setView("queue")}>
             <span className="action-icon">📥</span>
             <span className="action-title">Review Queue</span>
@@ -179,6 +185,43 @@ function ReviewerHome({ user }) {
             {overdueCount > 0 && <span className="badge-red">{overdueCount}</span>}
           </button>
         </div>
+      </div>
+    );
+  }
+
+// --- MY SUGGESTIONS ---
+  if (view === "my") {
+    const mine = allSuggestions.filter((s) => s.employeeName === user.name);
+    return (
+      <div className="page">
+        <button className="btn-back" onClick={() => setView("home")}>← Back</button>
+        <h2 className="page-title">📋 My Suggestions ({mine.length})</h2>
+        {mine.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">📭</div>
+            <p>You haven't submitted any suggestions yet.</p>
+            <button className="btn-primary" onClick={() => setView("submit")}>Submit One Now</button>
+          </div>
+        ) : (
+          <div className="suggestion-list">
+            {mine.map((s) => (
+              <div key={s.id} className="suggestion-card">
+                <div className="suggestion-header">
+                  <span className="suggestion-id">{s.id}</span>
+                  <span className="status-badge" style={{ background: (STATUS_COLORS[s.status] || "#94a3b8") + "18", color: STATUS_COLORS[s.status] || "#94a3b8" }}>{s.status}</span>
+                  {s.primaryImpact && <span className="qcdsmt-dot" style={{ background: QCDSMT_COLORS[s.primaryImpact] || "#6366f1" }}>{s.primaryImpact}</span>}
+                </div>
+                <div className="suggestion-area">{s.area} • {s.submittedDate}</div>
+                <div className="suggestion-problem"><strong>Problem:</strong> {s.problem}</div>
+                <div className="suggestion-text"><strong>Suggestion:</strong> {s.suggestion}</div>
+                {s.reviewerComment && <div className="reviewer-comment"><strong>Reviewer:</strong> {s.reviewerComment}</div>}
+                {s.status === "Approved" && s.assignedOwner && <div className="status-info status-approved">✅ Approved — Assigned to {s.assignedOwner} {s.dueDate ? "(Due: " + s.dueDate + ")" : ""}</div>}
+                {s.status === "Rejected" && <div className="status-info status-rejected">❌ Not approved at this time</div>}
+                {s.status === "Need Clarification" && <div className="status-info status-clarify">❓ Reviewer needs more information</div>}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
@@ -286,6 +329,39 @@ function ReviewerHome({ user }) {
                 </div>
               );
             })}
+          </div>
+        )}
+      </div>
+    );
+  }
+  
+// --- MY SUGGESTIONS ---
+  if (view === "my") {
+    const mine = allSuggestions.filter((s) => s.employeeName === user.name);
+    return (
+      <div className="page">
+        <button className="btn-back" onClick={() => setView("home")}>← Back</button>
+        <h2 className="page-title">📋 My Suggestions ({mine.length})</h2>
+        {mine.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">📭</div>
+            <p>You haven't submitted any suggestions yet.</p>
+            <button className="btn-primary" onClick={() => setView("submit")}>Submit One Now</button>
+          </div>
+        ) : (
+          <div className="suggestion-list">
+            {mine.map((s) => (
+              <div key={s.id} className="suggestion-card">
+                <div className="suggestion-header">
+                  <span className="suggestion-id">{s.id}</span>
+                  <span className="status-badge" style={{ background: (STATUS_COLORS[s.status] || "#94a3b8") + "18", color: STATUS_COLORS[s.status] || "#94a3b8" }}>{s.status}</span>
+                </div>
+                <div className="suggestion-area">{s.area} • {s.submittedDate}</div>
+                <div className="suggestion-problem"><strong>Problem:</strong> {s.problem}</div>
+                <div className="suggestion-text"><strong>Suggestion:</strong> {s.suggestion}</div>
+                {s.reviewerComment && <div className="reviewer-comment"><strong>Reviewer:</strong> {s.reviewerComment}</div>}
+              </div>
+            ))}
           </div>
         )}
       </div>
