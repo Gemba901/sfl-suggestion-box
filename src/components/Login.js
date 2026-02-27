@@ -5,8 +5,9 @@ import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 
 function Login({ onLogin }) {
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [name, setName] = useState(localStorage.getItem("sfl_name") || "");
+  const [phone, setPhone] = useState(localStorage.getItem("sfl_phone") || "");
+  const [remember, setRemember] = useState(localStorage.getItem("sfl_remember") === "true");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -21,7 +22,9 @@ function Login({ onLogin }) {
     try {
       const phoneToUse = phone.startsWith("+") ? phone : `+${phone}`;
 const user = await loginUser(name, phoneToUse);
-      if (user) {
+    if (user) {
+        if (remember) { localStorage.setItem("sfl_name", name.trim()); localStorage.setItem("sfl_phone", phone); localStorage.setItem("sfl_remember", "true"); }
+        else { localStorage.removeItem("sfl_name"); localStorage.removeItem("sfl_phone"); localStorage.removeItem("sfl_remember"); }
         onLogin(user);
       } else {
         setError("Name or phone number not found. Please check and try again.");
@@ -66,7 +69,11 @@ const user = await loginUser(name, phoneToUse);
 </div>
 
           {error && <div className="form-error">{error}</div>}
-
+        <div className="form-group" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <input type="checkbox" id="remember" checked={remember} onChange={(e) => setRemember(e.target.checked)} style={{ width: 18, height: 18 }} />
+            <label htmlFor="remember" style={{ fontSize: 13, color: "#475569", cursor: "pointer" }}>Remember me</label>
+          </div>
+          
           <button type="submit" className="btn-primary btn-full" disabled={loading}>
             {loading ? "Logging in..." : "Log In"}
           </button>
