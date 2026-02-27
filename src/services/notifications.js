@@ -23,10 +23,14 @@ function showBrowserNotification(title, body) {
         badge: "/favicon.ico",
       });
     } catch (e) {
-      // Some browsers don't support this
       console.log("Browser notification not supported:", e);
     }
   }
+}
+
+// Helper: build star string like ★★★☆☆
+function starString(rating) {
+  return "★".repeat(rating) + "☆".repeat(5 - rating);
 }
 
 // Listen for NEW suggestions (for Reviewers & Management)
@@ -45,10 +49,7 @@ export function subscribeToNewSuggestions(onNotification) {
         const title = "📥 New Suggestion";
         const body = `${sug.employee_name} submitted a suggestion for ${sug.area}`;
 
-        // In-app notification
         onNotification({ title, body, type: "new", data: sug });
-
-        // Browser notification (if on another tab)
         showBrowserNotification(title, body);
       }
     )
@@ -72,25 +73,48 @@ export function subscribeToStatusChanges(employeeName, onNotification) {
         const oldRow = payload.old;
         const newRow = payload.new;
 
-        // Only notify if status actually changed
-        if (oldRow.status === newRow.status) return;
-
         // Only notify the employee who submitted this suggestion
         if (newRow.employee_name !== employeeName) return;
 
-        let emoji = "📋";
-        if (newRow.status === "Approved") emoji = "✅";
-        if (newRow.status === "Rejected") emoji = "❌";
-        if (newRow.status === "Need Clarification") emoji = "❓";
-        if (newRow.status === "Implementing") emoji = "🔨";
-        if (newRow.status === "Implemented") emoji = "🎉";
-        if (newRow.status === "Closed") emoji = "🔒";
+        // Check if a rating was just given (even if status didn't change)
+        const ratingJustGiven = (newRow.impact_rating > 0) && (oldRow.impact_rating === 0 || !oldRow.impact_rating);
 
-        const title = `${emoji} Suggestion ${newRow.suggestion_id} Updated`;
-        const body = `Your suggestion has been ${newRow.status.toLowerCase()}`;
+        // Check if status changed
+        const statusChanged = oldRow.status !== newRow.status;
 
-        onNotification({ title, body, type: "status", data: newRow });
-        showBrowserNotification(title, body);
+        // Skip if nothing relevant changed
+        if (!statusChanged && !ratingJustGiven) return;
+
+        // RATING NOTIFICATION — takes priority when closing with a rating
+        if (ratingJustGiven && newRow.impact_rating > 0) {
+          const stars = starString(newRow.impact_rating);
+          const title = `⭐ Your Suggestion ${newRow.suggestion_id} Was Rated!`;
+          let body = `${stars} — Impact Rating: ${newRow.impact_rating}/5`;
+          if (newRow.rating_comment) {
+            body += ` — "${newRow.rating_comment}"`;
+          }
+
+          onNotification({ title, body, type: "rating", data: newRow });
+          showBrowserNotification(title, body);
+          return; // Don't also send status notification
+        }
+
+        // STATUS NOTIFICATION
+        if (statusChanged) {
+          let emoji = "📋";
+          if (newRow.status === "Approved") emoji = "✅";
+          if (newRow.status === "Rejected") emoji = "❌";
+          if (newRow.status === "Need Clarification") emoji = "❓";
+          if (newRow.status === "Implementing") emoji = "🔨";
+          if (newRow.status === "Implemented") emoji = "🎉";
+          if (newRow.status === "Closed") emoji = "🔒";
+
+          const title = `${emoji} Suggestion ${newRow.suggestion_id} Updated`;
+          const body = `Your suggestion has been ${newRow.status.toLowerCase()}`;
+
+          onNotification({ title, body, type: "status", data: newRow });
+          showBrowserNotification(title, body);
+        }
       }
     )
     .subscribe();
@@ -113,21 +137,45 @@ export function subscribeToAllStatusChanges(userName, onNotification) {
         const oldRow = payload.old;
         const newRow = payload.new;
 
-        if (oldRow.status === newRow.status) return;
-
-        // Notify if this user submitted the suggestion
+        // Only notify if this user submitted the suggestion
         if (newRow.employee_name !== userName) return;
 
-        let emoji = "📋";
-        if (newRow.status === "Approved") emoji = "✅";
-        if (newRow.status === "Rejected") emoji = "❌";
-        if (newRow.status === "Need Clarification") emoji = "❓";
+        // Check if a rating was just given
+        const ratingJustGiven = (newRow.impact_rating > 0) && (oldRow.impact_rating === 0 || !oldRow.impact_rating);
 
-        const title = `${emoji} Your Suggestion Updated`;
-        const body = `${newRow.suggestion_id} is now: ${newRow.status}`;
+        // Check if status changed
+        const statusChanged = oldRow.status !== newRow.status;
 
-        onNotification({ title, body, type: "status", data: newRow });
-        showBrowserNotification(title, body);
+        // Skip if nothing relevant changed
+        if (!statusChanged && !ratingJustGiven) return;
+
+        // RATING NOTIFICATION
+        if (ratingJustGiven && newRow.impact_rating > 0) {
+          const stars = starString(newRow.impact_rating);
+          const title = `⭐ Your Suggestion ${newRow.suggestion_id} Was Rated!`;
+          let body = `${stars} — Impact Rating: ${newRow.impact_rating}/5`;
+          if (newRow.rating_comment) {
+            body += ` — "${newRow.rating_comment}"`;
+          }
+
+          onNotification({ title, body, type: "rating", data: newRow });
+          showBrowserNotification(title, body);
+          return;
+        }
+
+        // STATUS NOTIFICATION
+        if (statusChanged) {
+          let emoji = "📋";
+          if (newRow.status === "Approved") emoji = "✅";
+          if (newRow.status === "Rejected") emoji = "❌";
+          if (newRow.status === "Need Clarification") emoji = "❓";
+
+          const title = `${emoji} Your Suggestion Updated`;
+          const body = `${newRow.suggestion_id} is now: ${newRow.status}`;
+
+          onNotification({ title, body, type: "status", data: newRow });
+          showBrowserNotification(title, body);
+        }
       }
     )
     .subscribe();

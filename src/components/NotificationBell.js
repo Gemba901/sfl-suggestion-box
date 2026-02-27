@@ -61,7 +61,9 @@ function NotificationBell({ notifications, onClear }) {
 export function NotificationToast({ notification, onDismiss }) {
   if (!notification) return null;
 
-  const bgColor = notification.type === "new" ? "#6366f1" :
+  const bgColor =
+    notification.type === "rating" ? "#d97706" :
+    notification.type === "new" ? "#6366f1" :
     notification.data?.status === "Approved" ? "#10b981" :
     notification.data?.status === "Rejected" ? "#ef4444" :
     notification.data?.status === "Need Clarification" ? "#f59e0b" : "#6366f1";
