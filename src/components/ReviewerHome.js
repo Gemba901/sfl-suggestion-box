@@ -34,6 +34,9 @@ function ReviewerHome({ user }) {
   const [owners, setOwners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showRating, setShowRating] = useState(null);
+  const [ratingStars, setRatingStars] = useState(0);
+  const [ratingComment, setRatingComment] = useState("");
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -99,11 +102,15 @@ function ReviewerHome({ user }) {
     }, 1500);
   }
 
-  async function handleStatusChange(sug, newStatus) {
+  async function handleStatusChange(sug, newStatus, ratingExtras) {
     const extras = {};
     if (newStatus === "Closed") {
       extras.closedDate = today;
       extras.closedBy = user.name;
+      if (ratingExtras) {
+        extras.impactRating = ratingExtras.impactRating;
+        extras.ratingComment = ratingExtras.ratingComment;
+      }
     }
     await updateSuggestionStatus(sug.id, newStatus, extras);
     await loadData();
@@ -189,43 +196,6 @@ function ReviewerHome({ user }) {
     );
   }
 
-// --- MY SUGGESTIONS ---
-  if (view === "my") {
-    const mine = allSuggestions.filter((s) => s.employeeName === user.name);
-    return (
-      <div className="page">
-        <button className="btn-back" onClick={() => setView("home")}>← Back</button>
-        <h2 className="page-title">📋 My Suggestions ({mine.length})</h2>
-        {mine.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">📭</div>
-            <p>You haven't submitted any suggestions yet.</p>
-            <button className="btn-primary" onClick={() => setView("submit")}>Submit One Now</button>
-          </div>
-        ) : (
-          <div className="suggestion-list">
-            {mine.map((s) => (
-              <div key={s.id} className="suggestion-card">
-                <div className="suggestion-header">
-                  <span className="suggestion-id">{s.id}</span>
-                  <span className="status-badge" style={{ background: (STATUS_COLORS[s.status] || "#94a3b8") + "18", color: STATUS_COLORS[s.status] || "#94a3b8" }}>{s.status}</span>
-                  {s.primaryImpact && <span className="qcdsmt-dot" style={{ background: QCDSMT_COLORS[s.primaryImpact] || "#6366f1" }}>{s.primaryImpact}</span>}
-                </div>
-                <div className="suggestion-area">{s.area} • {s.submittedDate}</div>
-                <div className="suggestion-problem"><strong>Problem:</strong> {s.problem}</div>
-                <div className="suggestion-text"><strong>Suggestion:</strong> {s.suggestion}</div>
-                {s.reviewerComment && <div className="reviewer-comment"><strong>Reviewer:</strong> {s.reviewerComment}</div>}
-                {s.status === "Approved" && s.assignedOwner && <div className="status-info status-approved">✅ Approved — Assigned to {s.assignedOwner} {s.dueDate ? "(Due: " + s.dueDate + ")" : ""}</div>}
-                {s.status === "Rejected" && <div className="status-info status-rejected">❌ Not approved at this time</div>}
-                {s.status === "Need Clarification" && <div className="status-info status-clarify">❓ Reviewer needs more information</div>}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
   // --- REVIEW QUEUE ---
   if (view === "queue") {
     const queue = allSuggestions.filter((s) => s.status === "New");
@@ -269,24 +239,70 @@ function ReviewerHome({ user }) {
     );
   }
 
+  // --- MY SUGGESTIONS ---
+  if (view === "my") {
+    const mine = allSuggestions.filter((s) => s.employeeName === user.name);
+    return (
+      <div className="page">
+        <button className="btn-back" onClick={() => setView("home")}>← Back</button>
+        <h2 className="page-title">📋 My Suggestions ({mine.length})</h2>
+        {mine.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">📭</div>
+            <p>You haven't submitted any suggestions yet.</p>
+            <button className="btn-primary" onClick={() => setView("submit")}>Submit One Now</button>
+          </div>
+        ) : (
+          <div className="suggestion-list">
+            {mine.map((s) => (
+              <div key={s.id} className="suggestion-card">
+                <div className="suggestion-header">
+                  <span className="suggestion-id">{s.id}</span>
+                  <span className="status-badge" style={{ background: (STATUS_COLORS[s.status] || "#94a3b8") + "18", color: STATUS_COLORS[s.status] || "#94a3b8" }}>{s.status}</span>
+                  {s.primaryImpact && <span className="qcdsmt-dot" style={{ background: QCDSMT_COLORS[s.primaryImpact] || "#6366f1" }}>{s.primaryImpact}</span>}
+                </div>
+                <div className="suggestion-area">{s.area} • {s.submittedDate}</div>
+                <div className="suggestion-problem"><strong>Problem:</strong> {s.problem}</div>
+                <div className="suggestion-text"><strong>Suggestion:</strong> {s.suggestion}</div>
+                {s.reviewerComment && <div className="reviewer-comment"><strong>Reviewer:</strong> {s.reviewerComment}</div>}
+                {s.status === "Approved" && s.assignedOwner && (
+                  <div className="status-info status-approved">✅ Approved — Assigned to {s.assignedOwner} {s.dueDate ? "(Due: " + s.dueDate + ")" : ""}</div>
+                )}
+                {s.status === "Rejected" && <div className="status-info status-rejected">❌ Not approved at this time</div>}
+                {s.status === "Need Clarification" && <div className="status-info status-clarify">❓ Reviewer needs more information</div>}
+                {s.impactRating > 0 && (
+                  <div className="impact-rating-display">
+                    <div className="impact-stars">{"★".repeat(s.impactRating)}{"☆".repeat(5 - s.impactRating)}</div>
+                    <div className="impact-label">Impact Rating: {s.impactRating}/5</div>
+                    {s.ratingComment && <div className="impact-comment">{s.ratingComment}</div>}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // --- IN PROGRESS ---
   if (view === "progress") {
-    const progressList = allSuggestions.filter((s) =>
+    const progressItems = allSuggestions.filter((s) =>
       ["Approved", "Implementing", "Implemented"].includes(s.status)
     );
     return (
       <div className="page">
         <button className="btn-back" onClick={() => setView("home")}>← Back</button>
-        <h2 className="page-title">⏳ In Progress ({progressList.length})</h2>
+        <h2 className="page-title">⏳ In Progress ({progressItems.length})</h2>
 
-        {progressList.length === 0 ? (
+        {progressItems.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📭</div>
             <p>No suggestions in progress.</p>
           </div>
         ) : (
           <div className="suggestion-list">
-            {progressList.map((s) => {
+            {progressItems.map((s) => {
               const isOverdue = s.dueDate && s.dueDate < today && s.status !== "Implemented";
               return (
                 <div key={s.id} className={"suggestion-card" + (isOverdue ? " card-overdue" : "")}>
@@ -321,7 +337,7 @@ function ReviewerHome({ user }) {
                       </button>
                     )}
                     {s.status === "Implemented" && (
-                      <button className="btn-sm btn-dark" onClick={() => handleStatusChange(s, "Closed")}>
+                      <button className="btn-sm btn-dark" onClick={() => { setShowRating(s); setRatingStars(0); setRatingComment(""); }}>
                         Verify & Close
                       </button>
                     )}
@@ -331,37 +347,76 @@ function ReviewerHome({ user }) {
             })}
           </div>
         )}
-      </div>
-    );
-  }
-  
-// --- MY SUGGESTIONS ---
-  if (view === "my") {
-    const mine = allSuggestions.filter((s) => s.employeeName === user.name);
-    return (
-      <div className="page">
-        <button className="btn-back" onClick={() => setView("home")}>← Back</button>
-        <h2 className="page-title">📋 My Suggestions ({mine.length})</h2>
-        {mine.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">📭</div>
-            <p>You haven't submitted any suggestions yet.</p>
-            <button className="btn-primary" onClick={() => setView("submit")}>Submit One Now</button>
-          </div>
-        ) : (
-          <div className="suggestion-list">
-            {mine.map((s) => (
-              <div key={s.id} className="suggestion-card">
-                <div className="suggestion-header">
-                  <span className="suggestion-id">{s.id}</span>
-                  <span className="status-badge" style={{ background: (STATUS_COLORS[s.status] || "#94a3b8") + "18", color: STATUS_COLORS[s.status] || "#94a3b8" }}>{s.status}</span>
-                </div>
-                <div className="suggestion-area">{s.area} • {s.submittedDate}</div>
-                <div className="suggestion-problem"><strong>Problem:</strong> {s.problem}</div>
-                <div className="suggestion-text"><strong>Suggestion:</strong> {s.suggestion}</div>
-                {s.reviewerComment && <div className="reviewer-comment"><strong>Reviewer:</strong> {s.reviewerComment}</div>}
+
+        {/* RATING MODAL */}
+        {showRating && (
+          <div className="rating-overlay">
+            <div className="rating-modal">
+              <h3 className="rating-modal-title">⭐ Rate Impact of {showRating.id}</h3>
+              <p className="rating-modal-sub">How much did this suggestion improve operations?</p>
+
+              <div className="rating-info">
+                <strong>Area:</strong> {showRating.area} •
+                <strong> QCDSMT:</strong> {showRating.primaryImpact || "—"}
               </div>
-            ))}
+              <div className="rating-info" style={{ marginTop: 4 }}>
+                <strong>Suggestion:</strong> {showRating.suggestion}
+              </div>
+
+              <div className="star-row">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    className={"star-btn" + (ratingStars >= n ? " star-active" : "")}
+                    onClick={() => setRatingStars(n)}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+              <div className="star-labels">
+                <span>Low impact</span>
+                <span>High impact</span>
+              </div>
+
+              <div className="form-group" style={{ marginTop: 12 }}>
+                <label>Comment (optional)</label>
+                <textarea
+                  placeholder="What changed after this was implemented?"
+                  value={ratingComment}
+                  onChange={(e) => setRatingComment(e.target.value)}
+                  className="form-input form-textarea"
+                  maxLength={300}
+                />
+              </div>
+
+              {ratingStars === 0 && <div className="form-error">Please select a star rating</div>}
+
+              <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                <button
+                  className="btn-back"
+                  style={{ flex: 1, textAlign: "center" }}
+                  onClick={() => setShowRating(null)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn-primary"
+                  style={{ flex: 1 }}
+                  disabled={ratingStars === 0}
+                  onClick={async () => {
+                    await handleStatusChange(showRating, "Closed", {
+                      impactRating: ratingStars,
+                      ratingComment: ratingComment,
+                    });
+                    setShowRating(null);
+                  }}
+                >
+                  Close & Save Rating
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

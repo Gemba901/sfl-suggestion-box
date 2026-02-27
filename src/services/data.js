@@ -92,6 +92,10 @@ export async function getSuggestions(user) {
     actionTaken: s.action_taken || "",
     closedDate: s.closed_date || "",
     closedBy: s.closed_by || "",
+    impactRating: s.impact_rating || 0,
+    ratingComment: s.rating_comment || "",
+    impactRating: s.impact_rating || 0,
+    ratingComment: s.rating_comment || "",
   }));
 }
 
@@ -166,6 +170,8 @@ export async function updateSuggestionStatus(id, newStatus, extras = {}) {
   if (extras.closedDate) updateData.closed_date = extras.closedDate;
   if (extras.closedBy) updateData.closed_by = extras.closedBy;
   if (extras.actionTaken) updateData.action_taken = extras.actionTaken;
+  if (extras.impactRating) updateData.impact_rating = extras.impactRating;
+  if (extras.ratingComment) updateData.rating_comment = extras.ratingComment;
 
   const { error } = await supabase
     .from("suggestions")

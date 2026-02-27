@@ -173,6 +173,15 @@ function EmployeeHome({ user }) {
                   🎉 Your idea has been implemented!
                 </div>
               )}
+              {s.impactRating > 0 && (
+                <div className="impact-rating-display">
+                  <div className="impact-stars">
+                    {"★".repeat(s.impactRating)}{"☆".repeat(5 - s.impactRating)}
+                  </div>
+                  <div className="impact-label">Impact Rating: {s.impactRating}/5</div>
+                  {s.ratingComment && <div className="impact-comment">{s.ratingComment}</div>}
+                </div>
+              )}
             </div>
           ))}
         </div>
