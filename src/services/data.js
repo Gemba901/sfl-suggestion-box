@@ -94,8 +94,6 @@ export async function getSuggestions(user) {
     closedBy: s.closed_by || "",
     impactRating: s.impact_rating || 0,
     ratingComment: s.rating_comment || "",
-    impactRating: s.impact_rating || 0,
-    ratingComment: s.rating_comment || "",
   }));
 }
 
