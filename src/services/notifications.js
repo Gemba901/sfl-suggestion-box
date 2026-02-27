@@ -49,7 +49,10 @@ export function subscribeToNewSuggestions(onNotification) {
         const title = "📥 New Suggestion";
         const body = `${sug.employee_name} submitted a suggestion for ${sug.area}`;
 
+        // In-app notification
         onNotification({ title, body, type: "new", data: sug });
+
+        // Browser notification (if on another tab)
         showBrowserNotification(title, body);
       }
     )
@@ -58,7 +61,7 @@ export function subscribeToNewSuggestions(onNotification) {
   return channel;
 }
 
-// Listen for STATUS CHANGES on suggestions (for Employees)
+// Listen for STATUS + RATING changes on suggestions (for Employees)
 export function subscribeToStatusChanges(employeeName, onNotification) {
   const channel = supabase
     .channel("status-changes")
@@ -76,17 +79,11 @@ export function subscribeToStatusChanges(employeeName, onNotification) {
         // Only notify the employee who submitted this suggestion
         if (newRow.employee_name !== employeeName) return;
 
-        // Check if a rating was just given (even if status didn't change)
-        const ratingJustGiven = (newRow.impact_rating > 0) && (oldRow.impact_rating === 0 || !oldRow.impact_rating);
+        // Check if status changed (oldRow may only have id without REPLICA IDENTITY FULL)
+        const statusChanged = oldRow.status ? (oldRow.status !== newRow.status) : true;
 
-        // Check if status changed
-        const statusChanged = oldRow.status !== newRow.status;
-
-        // Skip if nothing relevant changed
-        if (!statusChanged && !ratingJustGiven) return;
-
-        // RATING NOTIFICATION — takes priority when closing with a rating
-        if (ratingJustGiven && newRow.impact_rating > 0) {
+        // Check if a rating was given — if status is Closed and rating > 0, show rating notif
+        if (newRow.impact_rating > 0 && newRow.status === "Closed") {
           const stars = starString(newRow.impact_rating);
           const title = `⭐ Your Suggestion ${newRow.suggestion_id} Was Rated!`;
           let body = `${stars} — Impact Rating: ${newRow.impact_rating}/5`;
@@ -122,7 +119,7 @@ export function subscribeToStatusChanges(employeeName, onNotification) {
   return channel;
 }
 
-// Listen for ALL status changes (for Reviewers & Management who also submit)
+// Listen for ALL status + rating changes (for Reviewers & Management who also submit)
 export function subscribeToAllStatusChanges(userName, onNotification) {
   const channel = supabase
     .channel("all-status-changes")
@@ -140,17 +137,10 @@ export function subscribeToAllStatusChanges(userName, onNotification) {
         // Only notify if this user submitted the suggestion
         if (newRow.employee_name !== userName) return;
 
-        // Check if a rating was just given
-        const ratingJustGiven = (newRow.impact_rating > 0) && (oldRow.impact_rating === 0 || !oldRow.impact_rating);
+        const statusChanged = oldRow.status ? (oldRow.status !== newRow.status) : true;
 
-        // Check if status changed
-        const statusChanged = oldRow.status !== newRow.status;
-
-        // Skip if nothing relevant changed
-        if (!statusChanged && !ratingJustGiven) return;
-
-        // RATING NOTIFICATION
-        if (ratingJustGiven && newRow.impact_rating > 0) {
+        // RATING NOTIFICATION — Closed with a rating
+        if (newRow.impact_rating > 0 && newRow.status === "Closed") {
           const stars = starString(newRow.impact_rating);
           const title = `⭐ Your Suggestion ${newRow.suggestion_id} Was Rated!`;
           let body = `${stars} — Impact Rating: ${newRow.impact_rating}/5`;
@@ -169,6 +159,9 @@ export function subscribeToAllStatusChanges(userName, onNotification) {
           if (newRow.status === "Approved") emoji = "✅";
           if (newRow.status === "Rejected") emoji = "❌";
           if (newRow.status === "Need Clarification") emoji = "❓";
+          if (newRow.status === "Implementing") emoji = "🔨";
+          if (newRow.status === "Implemented") emoji = "🎉";
+          if (newRow.status === "Closed") emoji = "🔒";
 
           const title = `${emoji} Your Suggestion Updated`;
           const body = `${newRow.suggestion_id} is now: ${newRow.status}`;

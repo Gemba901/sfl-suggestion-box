@@ -19,6 +19,7 @@ function App() {
   const [notifications, setNotifications] = useState([]);
   const [toast, setToast] = useState(null);
   const [dark, setDark] = useState(localStorage.getItem("sfl_dark") === "true");
+  const [mgmtMode, setMgmtMode] = useState("dashboard"); // "dashboard" or "review"
 
   // Apply dark mode class to body
   useEffect(() => {
@@ -36,39 +37,29 @@ function App() {
       ...notif,
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
-    setNotifications((prev) => [withTime, ...prev].slice(0, 20)); // Keep last 20
+    setNotifications((prev) => [withTime, ...prev].slice(0, 20));
     setToast(withTime);
-    setTimeout(() => setToast(null), 4000); // Auto-dismiss after 4 seconds
+    setTimeout(() => setToast(null), 4000);
   }, []);
 
   // Setup realtime subscriptions when user logs in
   useEffect(() => {
     if (!user) return;
-
-    // Request browser notification permission
     requestBrowserPermission();
-
-    // Subscribe based on role
     if (user.role === "Reviewer" || user.role === "Management") {
-      // Reviewers/Management get notified of new suggestions
       subscribeToNewSuggestions(addNotification);
-      // They also get notified if THEIR suggestions get reviewed
       subscribeToAllStatusChanges(user.name, addNotification);
     } else {
-      // Employees get notified when their suggestions are reviewed
       subscribeToStatusChanges(user.name, addNotification);
     }
-
-    // Cleanup on logout
-    return () => {
-      unsubscribeAll();
-    };
+    return () => { unsubscribeAll(); };
   }, [user, addNotification]);
 
   function handleLogout() {
     unsubscribeAll();
     setNotifications([]);
     setToast(null);
+    setMgmtMode("dashboard");
     setUser(null);
   }
 
@@ -104,7 +95,30 @@ function App() {
       <div className="app-content">
         {user.role === "Employee" && <EmployeeHome user={user} />}
         {user.role === "Reviewer" && <ReviewerHome user={user} />}
-        {user.role === "Management" && <Dashboard user={user} />}
+        {user.role === "Management" && (
+          <>
+            {/* Toggle between Dashboard and Review mode */}
+            <div style={{ padding: "16px 16px 0", maxWidth: 800, margin: "0 auto" }}>
+              <div className="mode-toggle">
+                <button
+                  className={"mode-toggle-btn" + (mgmtMode === "dashboard" ? " mode-toggle-active" : "")}
+                  onClick={() => setMgmtMode("dashboard")}
+                >
+                  📊 Dashboard
+                </button>
+                <button
+                  className={"mode-toggle-btn" + (mgmtMode === "review" ? " mode-toggle-active" : "")}
+                  onClick={() => setMgmtMode("review")}
+                >
+                  📥 Review & Rate
+                </button>
+              </div>
+            </div>
+
+            {mgmtMode === "dashboard" && <Dashboard user={user} />}
+            {mgmtMode === "review" && <ReviewerHome user={user} />}
+          </>
+        )}
       </div>
     </div>
   );
