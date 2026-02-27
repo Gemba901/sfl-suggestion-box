@@ -18,6 +18,17 @@ function App() {
   const [user, setUser] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [toast, setToast] = useState(null);
+  const [dark, setDark] = useState(localStorage.getItem("sfl_dark") === "true");
+
+  // Apply dark mode class to body
+  useEffect(() => {
+    if (dark) {
+      document.body.classList.add("dark-mode");
+    } else {
+      document.body.classList.remove("dark-mode");
+    }
+    localStorage.setItem("sfl_dark", dark);
+  }, [dark]);
 
   // Add a notification to the list + show toast
   const addNotification = useCallback((notif) => {
@@ -76,6 +87,9 @@ function App() {
           </div>
         </div>
         <div className="header-right">
+          <button className="btn-dark-toggle" onClick={() => setDark(!dark)} title={dark ? "Light mode" : "Dark mode"}>
+            {dark ? "☀️" : "🌙"}
+          </button>
           <NotificationBell
             notifications={notifications}
             onClear={() => setNotifications([])}
