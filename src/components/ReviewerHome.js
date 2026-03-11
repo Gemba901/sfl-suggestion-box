@@ -1,6 +1,6 @@
 // src/components/ReviewerHome.js
 import { useState, useEffect, useCallback } from "react";
-import { getSuggestions, getQCDSMT, getOwners, reviewSuggestion, updateSuggestionStatus } from "../services/data";
+import { getSuggestions, getQCDSMT, getOwners, reviewSuggestion, updateSuggestionStatus, getDeptSuggestions } from "../services/data";
 import SubmitForm from "./SubmitForm";
 
 const STATUS_COLORS = {
@@ -30,6 +30,7 @@ function ReviewerHome({ user }) {
   const [success, setSuccess] = useState("");
 
   const [allSuggestions, setAllSuggestions] = useState([]);
+  const [deptSuggestions, setDeptSuggestions] = useState([]);
   const [qcdsmt, setQcdsmt] = useState([]);
   const [owners, setOwners] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,14 +41,16 @@ function ReviewerHome({ user }) {
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const [sugData, qData, oData] = await Promise.all([
+    const [sugData, qData, oData, deptData] = await Promise.all([
       getSuggestions(user),
       getQCDSMT(),
       getOwners(),
+      getDeptSuggestions(user.department),
     ]);
     setAllSuggestions(sugData);
     setQcdsmt(qData);
     setOwners(oData);
+    setDeptSuggestions(deptData);
     setLoading(false);
   }, [user]);
 
@@ -136,6 +139,96 @@ function ReviewerHome({ user }) {
     );
   }
 
+  // --- MY DEPT VIEW ---
+  if (view === "dept") {
+    const dept = user.department || "Unknown";
+    const dTotal = deptSuggestions.length;
+    const dPending = deptSuggestions.filter((s) => s.status === "New" || s.status === "Under Review").length;
+    const dApproved = deptSuggestions.filter((s) => ["Approved", "Implementing", "Implemented", "Closed"].includes(s.status)).length;
+    const dCompleted = deptSuggestions.filter((s) => ["Implemented", "Closed"].includes(s.status)).length;
+    const dRated = deptSuggestions.filter((s) => s.impactRating > 0);
+    const dAvgRating = dRated.length > 0 ? (dRated.reduce((sum, s) => sum + s.impactRating, 0) / dRated.length).toFixed(1) : "—";
+    const dOverdue = deptSuggestions.filter((s) => s.dueDate && s.dueDate < today && !["Closed", "Implemented", "Rejected"].includes(s.status)).length;
+
+    return (
+      <div className="page">
+        <button className="btn-back" onClick={() => setView("home")}>← Back</button>
+        <h2 className="page-title">📊 {dept} — Department Summary</h2>
+
+        <div className="kpi-grid">
+          <div className="kpi-card">
+            <div className="kpi-icon">📋</div>
+            <div className="kpi-value" style={{ color: "#3b82f6" }}>{dTotal}</div>
+            <div className="kpi-label">Total</div>
+          </div>
+          <div className="kpi-card">
+            <div className="kpi-icon">📥</div>
+            <div className="kpi-value" style={{ color: "#f59e0b" }}>{dPending}</div>
+            <div className="kpi-label">Pending</div>
+          </div>
+          <div className="kpi-card">
+            <div className="kpi-icon">✅</div>
+            <div className="kpi-value" style={{ color: "#10b981" }}>{dApproved}</div>
+            <div className="kpi-label">Approved</div>
+          </div>
+          <div className="kpi-card">
+            <div className="kpi-icon">🎯</div>
+            <div className="kpi-value" style={{ color: "#6366f1" }}>{dCompleted}</div>
+            <div className="kpi-label">Completed</div>
+          </div>
+          <div className="kpi-card">
+            <div className="kpi-icon">⭐</div>
+            <div className="kpi-value" style={{ color: "#d97706" }}>{dAvgRating}</div>
+            <div className="kpi-label">Avg Rating</div>
+          </div>
+          <div className={"kpi-card" + (dOverdue > 0 ? " kpi-alert" : "")}>
+            <div className="kpi-icon">⏰</div>
+            <div className="kpi-value" style={{ color: dOverdue > 0 ? "#ef4444" : "#10b981" }}>{dOverdue}</div>
+            <div className="kpi-label">Overdue</div>
+          </div>
+        </div>
+
+        <h3 style={{ margin: "20px 0 12px", fontSize: 16, fontWeight: 600 }}>All Suggestions in {dept} ({dTotal})</h3>
+
+        {dTotal === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">📭</div>
+            <p>No suggestions for this department yet.</p>
+          </div>
+        ) : (
+          <div className="suggestion-list">
+            {deptSuggestions.map((s) => (
+              <div key={s.id} className="suggestion-card">
+                <div className="suggestion-header">
+                  <span className="suggestion-id">{s.id}</span>
+                  <span className="status-badge" style={{ background: (STATUS_COLORS[s.status] || "#94a3b8") + "18", color: STATUS_COLORS[s.status] || "#94a3b8" }}>
+                    {s.status}
+                  </span>
+                  {s.primaryImpact && (
+                    <span className="qcdsmt-dot" style={{ background: QCDSMT_COLORS[s.primaryImpact] }}>{s.primaryImpact}</span>
+                  )}
+                </div>
+                <div className="suggestion-area">{s.employeeName} • {s.submittedDate}</div>
+                <div className="suggestion-problem"><strong>Problem:</strong> {s.problem}</div>
+                <div className="suggestion-text"><strong>Suggestion:</strong> {s.suggestion}</div>
+                {s.reviewerComment && <div className="reviewer-comment"><strong>Reviewer:</strong> {s.reviewerComment}</div>}
+                {s.assignedOwner && <div className="text-muted">Owner: {s.assignedOwner} | Due: {s.dueDate || "—"}</div>}
+                {s.impactRating > 0 && (
+                  <div className="impact-rating-display">
+                    <div className="impact-stars">
+                      {"★".repeat(s.impactRating)}{"☆".repeat(5 - s.impactRating)}
+                    </div>
+                    <div className="impact-label">Impact Rating: {s.impactRating}/5</div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // --- HOME ---
   if (view === "home") {
     return (
@@ -176,6 +269,12 @@ function ReviewerHome({ user }) {
             <span className="action-icon">📋</span>
             <span className="action-title">My Suggestions</span>
             <span className="action-desc">Track your own submitted ideas</span>
+          </button>
+
+          <button className="action-card action-progress" onClick={() => setView("dept")}>
+            <span className="action-icon">🏢</span>
+            <span className="action-title">My Department</span>
+            <span className="action-desc">See all suggestions in {user.department || "your dept"}</span>
           </button>
 
           <button className="action-card action-review" onClick={() => setView("queue")}>
@@ -439,7 +538,7 @@ function ReviewerHome({ user }) {
             <span className="review-value">{s.employeeName}</span>
           </div>
           <div className="review-field">
-            <span className="review-label">Area</span>
+            <span className="review-label">Department</span>
             <span className="review-value">{s.area}</span>
           </div>
           <div className="review-field">

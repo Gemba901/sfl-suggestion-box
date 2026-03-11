@@ -21,6 +21,7 @@ function SubmitForm({ user, onBack, onSuccess }) {
   useEffect(() => {
     async function load() {
       const [aData, qData] = await Promise.all([getAreas(), getQCDSMT()]);
+      console.log("Areas loaded:", aData); // DEBUG — check browser console
       setAreas(aData);
       setQcdsmt(qData);
     }
@@ -31,7 +32,7 @@ function SubmitForm({ user, onBack, onSuccess }) {
     e.preventDefault();
     setError("");
 
-    if (!area) { setError("Please select an area"); return; }
+    if (!area) { setError("Please select a department"); return; }
     if (problem.trim().length < 10) { setError("Problem must be at least 10 characters"); return; }
     if (suggestion.trim().length < 10) { setError("Suggestion must be at least 10 characters"); return; }
     if (!selectedImpact) { setError("Please select where your suggestion improves, or choose \"I'm not sure\""); return; }
@@ -75,10 +76,18 @@ function SubmitForm({ user, onBack, onSuccess }) {
           <input type="text" value={new Date().toLocaleDateString()} disabled className="form-input form-disabled" />
         </div>
 
+        {/* Show user's own department */}
         <div className="form-group">
-          <label>Area <span className="required">*</span></label>
+          <label>Your Department</label>
+          <input type="text" value={user.area || user.department || "Not assigned"} disabled className="form-input form-disabled" />
+        </div>
+
+        {/* Department the suggestion is ABOUT */}
+        <div className="form-group">
+          <label>Suggestion is about which department? <span className="required">*</span></label>
+          <p className="form-hint">Choose the department this suggestion relates to.</p>
           <select value={area} onChange={(e) => setArea(e.target.value)} className="form-input">
-            <option value="">Select area...</option>
+            <option value="">Select department...</option>
             {areas.map((a) => (
               <option key={a.id} value={a.area_name}>{a.area_name}</option>
             ))}

@@ -19,14 +19,27 @@ export async function loginUser(name, phone) {
   return data;
 }
 
-// Get all active areas
+// Get all active departments (unique)
 export async function getAreas() {
   const { data } = await supabase
     .from("areas")
     .select("*")
     .eq("is_active", true)
-    .order("area_name");
-  return data || [];
+    .order("department_name");
+
+  if (!data) return [];
+
+  // Deduplicate by department_name — areas table has one row per job position
+  const seen = new Set();
+  const unique = [];
+  data.forEach((row) => {
+    const name = row.department_name;
+    if (name && !seen.has(name)) {
+      seen.add(name);
+      unique.push({ id: row.id, area_name: name });
+    }
+  });
+  return unique;
 }
 
 // Get all QCDSMT categories
@@ -51,13 +64,13 @@ export async function getStatusFlow() {
 export async function getOwners() {
   const { data } = await supabase
     .from("employees")
-    .select("name, owner_title, area")
+    .select("name, owner_title, department")
     .neq("owner_title", "")
     .eq("is_active", true);
   return (data || []).map((e) => ({
     name: e.name,
     title: e.owner_title,
-    area: e.area,
+    area: e.department,
   }));
 }
 
@@ -73,6 +86,40 @@ export async function getSuggestions(user) {
   }
 
   const { data } = await query;
+  return (data || []).map((s) => ({
+    id: s.suggestion_id,
+    dbId: s.id,
+    employeeName: s.employee_name,
+    submittedDate: s.submitted_date,
+    area: s.area,
+    problem: s.problem,
+    suggestion: s.suggestion,
+    photo: s.photo_url,
+    status: s.status,
+    primaryImpact: s.primary_impact || "",
+    secondaryImpact: s.secondary_impact || "",
+    reviewDecision: s.review_decision || "",
+    reviewerComment: s.reviewer_comment || "",
+    assignedOwner: s.assigned_owner || "",
+    dueDate: s.due_date || "",
+    actionTaken: s.action_taken || "",
+    closedDate: s.closed_date || "",
+    closedBy: s.closed_by || "",
+    impactRating: s.impact_rating || 0,
+    ratingComment: s.rating_comment || "",
+  }));
+}
+
+// Get suggestions for a specific department (for My Dept tab)
+export async function getDeptSuggestions(department) {
+  if (!department) return [];
+
+  const { data } = await supabase
+    .from("suggestions")
+    .select("*")
+    .eq("area", department)
+    .order("submitted_date", { ascending: false });
+
   return (data || []).map((s) => ({
     id: s.suggestion_id,
     dbId: s.id,
@@ -113,7 +160,6 @@ export async function getNextId() {
 }
 
 // Submit a new suggestion (Employee/Reviewer/Management)
-// employeeImpact = the QCDSMT code the employee chose, or "" if "I'm not sure"
 export async function submitSuggestion(user, area, problem, suggestion, employeeImpact) {
   const newId = await getNextId();
   const { data, error } = await supabase
