@@ -19,6 +19,56 @@ const DEPT_COLORS = [
   "#a855f7", "#06b6d4", "#84cc16", "#e11d48", "#7c3aed",
 ];
 
+function SkeletonCard() {
+  return (
+    <div className="skeleton-card">
+      <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+        <div className="skeleton-line skeleton-short" style={{ marginBottom: 0 }} />
+        <div className="skeleton-line" style={{ width: 80, marginBottom: 0 }} />
+      </div>
+      <div className="skeleton-line skeleton-medium" />
+      <div className="skeleton-line skeleton-full" />
+    </div>
+  );
+}
+
+function exportToCSV(suggestions) {
+  const headers = [
+    "ID", "Date", "Employee", "Department", "Status",
+    "Primary Impact", "Secondary Impact", "Problem", "Suggestion",
+    "Assigned Owner", "Due Date", "Action Taken", "Impact Rating", "Rating Comment",
+    "Closed Date", "Closed By"
+  ];
+
+  const rows = suggestions.map((s) => [
+    s.id || "",
+    s.submittedDate || "",
+    s.employeeName || "",
+    s.area || "",
+    s.status || "",
+    s.primaryImpact || "",
+    s.secondaryImpact || "",
+    `"${(s.problem || "").replace(/"/g, '""')}"`,
+    `"${(s.suggestion || "").replace(/"/g, '""')}"`,
+    s.assignedOwner || "",
+    s.dueDate || "",
+    `"${(s.actionTaken || "").replace(/"/g, '""')}"`,
+    s.impactRating || "",
+    `"${(s.ratingComment || "").replace(/"/g, '""')}"`,
+    s.closedDate || "",
+    s.closedBy || "",
+  ]);
+
+  const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `sfl-suggestions-${new Date().toISOString().split("T")[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function Dashboard({ user }) {
   const [tab, setTab] = useState("overview");
   const [showSubmit, setShowSubmit] = useState(false);
@@ -26,24 +76,66 @@ function Dashboard({ user }) {
   const [allSuggestions, setAllSuggestions] = useState([]);
   const [qcdsmt, setQcdsmt] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Search + filter for "All Suggestions" tab
+  const [allSearch, setAllSearch] = useState("");
+  const [allStatusFilter, setAllStatusFilter] = useState("All");
 
   const loadData = useCallback(async () => {
-    setLoading(true);
-    const [sugData, qData] = await Promise.all([
-      getSuggestions(user),
-      getQCDSMT(),
-    ]);
-    setAllSuggestions(sugData);
-    setQcdsmt(qData);
-    setLoading(false);
+    setLoadError(null);
+    try {
+      const [sugData, qData] = await Promise.all([
+        getSuggestions(user),
+        getQCDSMT(),
+      ]);
+      setAllSuggestions(sugData);
+      setQcdsmt(qData);
+    } catch (err) {
+      setLoadError("Failed to load dashboard data. Please check your connection.");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, [user]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  async function handleRefresh() {
+    setRefreshing(true);
+    await loadData();
+  }
+
   if (loading) {
-    return <div className="page" style={{ textAlign: "center", paddingTop: 60 }}>
-      <div style={{ fontSize: 32 }}>⏳</div><p>Loading dashboard...</p>
-    </div>;
+    return (
+      <div className="page">
+        <div className="skeleton-list">
+          <div className="skeleton-card" style={{ height: 100 }}>
+            <div className="skeleton-line skeleton-medium" />
+            <div className="skeleton-line skeleton-short" />
+          </div>
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="page">
+        <div className="error-state">
+          <div className="error-icon">⚠️</div>
+          <h3>Something went wrong</h3>
+          <p>{loadError}</p>
+          <button className="btn-primary" onClick={() => { setLoading(true); loadData(); }}>
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
   }
 
   // --- MY SUGGESTIONS ---
@@ -124,7 +216,7 @@ function Dashboard({ user }) {
   const statusCounts = {};
   allSuggestions.forEach((s) => { statusCounts[s.status] = (statusCounts[s.status] || 0) + 1; });
 
-  // --- MY DEPARTMENT DATA ---
+  // My dept data
   const myDept = user.department || user.area || "";
   const deptSuggestions = myDept ? allSuggestions.filter((s) => s.area === myDept) : [];
   const deptTotal = deptSuggestions.length;
@@ -140,6 +232,23 @@ function Dashboard({ user }) {
   const deptAvgRating = deptRated.length > 0 ? (deptRated.reduce((sum, s) => sum + s.impactRating, 0) / deptRated.length).toFixed(1) : "—";
   const deptRank = areaData.findIndex(([area]) => area === myDept) + 1;
 
+  // Filtered "All Suggestions"
+  const filteredAll = allSuggestions.filter((s) => {
+    const matchStatus = allStatusFilter === "All" || s.status === allStatusFilter;
+    const q = allSearch.toLowerCase();
+    const matchSearch = !q || (
+      s.id?.toLowerCase().includes(q) ||
+      s.area?.toLowerCase().includes(q) ||
+      s.employeeName?.toLowerCase().includes(q) ||
+      s.problem?.toLowerCase().includes(q) ||
+      s.suggestion?.toLowerCase().includes(q) ||
+      s.assignedOwner?.toLowerCase().includes(q)
+    );
+    return matchStatus && matchSearch;
+  });
+
+  const ALL_STATUSES = ["New", "Under Review", "Approved", "Need Clarification", "Rejected", "Implementing", "Implemented", "Closed"];
+
   return (
     <div className="page">
       <div className="welcome-card welcome-management">
@@ -151,13 +260,17 @@ function Dashboard({ user }) {
       <div className="action-cards" style={{ marginBottom: 16 }}>
         <button className="action-card action-submit" onClick={() => setShowSubmit(true)}>
           <span className="action-icon">💡</span>
-          <span className="action-title">Submit Suggestion</span>
-          <span className="action-desc">Share your own idea to improve SFL</span>
+          <span>
+            <span className="action-title">Submit Suggestion</span>
+            <span className="action-desc">Share your own idea to improve SFL</span>
+          </span>
         </button>
         <button className="action-card action-view" onClick={() => setShowMine(true)}>
           <span className="action-icon">📋</span>
-          <span className="action-title">My Suggestions</span>
-          <span className="action-desc">Track your own submitted ideas</span>
+          <span>
+            <span className="action-title">My Suggestions</span>
+            <span className="action-desc">Track your own submitted ideas</span>
+          </span>
         </button>
       </div>
 
@@ -176,7 +289,7 @@ function Dashboard({ user }) {
           ...(myDept ? [{ k: "mydept", l: "My Dept" }] : []),
           { k: "qcdsmt", l: "QCDSMT" },
           { k: "areas", l: "By Area" },
-          { k: "all", l: "All Suggestions" },
+          { k: "all", l: "All" },
         ].map((t) => (
           <button key={t.k} onClick={() => setTab(t.k)} className={"tab-btn" + (tab === t.k ? " tab-active" : "")}>{t.l}</button>
         ))}
@@ -184,6 +297,13 @@ function Dashboard({ user }) {
 
       {tab === "overview" && (
         <div className="chart-section">
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8, gap: 8 }}>
+            <button className="btn-export" onClick={() => exportToCSV(allSuggestions)} title="Download all data as CSV">
+              ⬇ Export CSV
+            </button>
+            <button className={"btn-refresh" + (refreshing ? " spinning" : "")} onClick={handleRefresh} title="Refresh data">🔄</button>
+          </div>
+
           <div className="chart-card">
             <h3 className="chart-title">📊 Department Comparison</h3>
             <p className="chart-subtitle">Which departments have the most suggestions?</p>
@@ -327,20 +447,62 @@ function Dashboard({ user }) {
       )}
 
       {tab === "all" && (
-        <div className="suggestion-list">
-          {allSuggestions.map((s) => (
-            <div key={s.id} className="suggestion-card">
-              <div className="suggestion-header">
-                <span className="suggestion-id">{s.id}</span>
-                <span className="status-badge" style={{ background: (STATUS_COLORS[s.status] || "#94a3b8") + "18", color: STATUS_COLORS[s.status] || "#94a3b8" }}>{s.status}</span>
-                {s.primaryImpact && <span className="qcdsmt-dot" style={{ background: QCDSMT_COLORS[s.primaryImpact] }}>{s.primaryImpact}</span>}
-              </div>
-              <div className="suggestion-area">{s.area} • {s.employeeName} • {s.submittedDate}</div>
-              <div className="suggestion-problem"><strong>Problem:</strong> {s.problem}</div>
-              <div className="suggestion-text"><strong>Suggestion:</strong> {s.suggestion}</div>
-              {s.assignedOwner && <div className="text-muted">Owner: {s.assignedOwner} | Due: {s.dueDate || "—"}</div>}
+        <div>
+          {/* Search + filter + export row */}
+          <div className="filter-row" style={{ marginBottom: 10 }}>
+            <div className="search-input-wrap">
+              <span className="search-icon">🔍</span>
+              <input
+                className="search-input"
+                placeholder="Search by employee, area, ID, suggestion..."
+                value={allSearch}
+                onChange={(e) => setAllSearch(e.target.value)}
+              />
             </div>
-          ))}
+            <button className="btn-export" onClick={() => exportToCSV(filteredAll)} title="Export filtered results as CSV">
+              ⬇ CSV
+            </button>
+          </div>
+          <div className="status-filter">
+            {["All", ...ALL_STATUSES].map((s) => (
+              <button
+                key={s}
+                className={"filter-chip" + (allStatusFilter === s ? " filter-chip-active" : "")}
+                onClick={() => setAllStatusFilter(s)}
+              >{s}</button>
+            ))}
+          </div>
+          <p className="results-count">Showing {filteredAll.length} of {total} suggestions</p>
+
+          {filteredAll.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-icon">🔍</div>
+              <p>No suggestions match your search.</p>
+              <button className="btn-back" onClick={() => { setAllSearch(""); setAllStatusFilter("All"); }}>Clear filters</button>
+            </div>
+          ) : (
+            <div className="suggestion-list">
+              {filteredAll.map((s) => (
+                <div key={s.id} className="suggestion-card">
+                  <div className="suggestion-header">
+                    <span className="suggestion-id">{s.id}</span>
+                    <span className="status-badge" style={{ background: (STATUS_COLORS[s.status] || "#94a3b8") + "18", color: STATUS_COLORS[s.status] || "#94a3b8" }}>{s.status}</span>
+                    {s.primaryImpact && <span className="qcdsmt-dot" style={{ background: QCDSMT_COLORS[s.primaryImpact] }}>{s.primaryImpact}</span>}
+                  </div>
+                  <div className="suggestion-area">{s.area} • {s.employeeName} • {s.submittedDate}</div>
+                  <div className="suggestion-problem"><strong>Problem:</strong> {s.problem}</div>
+                  <div className="suggestion-text"><strong>Suggestion:</strong> {s.suggestion}</div>
+                  {s.assignedOwner && <div className="text-muted">Owner: {s.assignedOwner} | Due: {s.dueDate || "—"}</div>}
+                  {s.impactRating > 0 && (
+                    <div className="impact-rating-display">
+                      <div className="impact-stars">{"★".repeat(s.impactRating)}{"☆".repeat(5 - s.impactRating)}</div>
+                      <div className="impact-label">Impact Rating: {s.impactRating}/5</div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
