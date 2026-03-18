@@ -17,6 +17,61 @@ const QCDSMT_COLORS = {
   Q: "#2563eb", C: "#059669", D: "#d97706", S: "#dc2626", M: "#7c3aed", T: "#0891b2",
 };
 
+function SkeletonCard() {
+  return (
+    <div className="skeleton-card">
+      <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+        <div className="skeleton-line skeleton-short" style={{ marginBottom: 0 }} />
+        <div className="skeleton-line" style={{ width: 80, marginBottom: 0 }} />
+      </div>
+      <div className="skeleton-line skeleton-medium" />
+      <div className="skeleton-line skeleton-full" />
+      <div className="skeleton-line skeleton-full" />
+    </div>
+  );
+}
+
+function ExpandableText({ text, label, maxLen = 160 }) {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = text && text.length > maxLen;
+  return (
+    <div>
+      <div className={`suggestion-text${isLong && !expanded ? " suggestion-text-truncated" : ""}`}>
+        <strong>{label}:</strong> {text}
+      </div>
+      {isLong && (
+        <button className="btn-expand" onClick={() => setExpanded(!expanded)}>
+          {expanded ? "Show less ▲" : "Show more ▼"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// Confirmation modal
+function ConfirmModal({ title, body, confirmLabel, confirmColor = "#6366f1", onConfirm, onCancel }) {
+  return (
+    <div className="confirm-overlay">
+      <div className="confirm-modal">
+        <div className="confirm-title">{title}</div>
+        <div className="confirm-body">{body}</div>
+        <div className="confirm-actions">
+          <button className="btn-back" style={{ flex: 1, textAlign: "center" }} onClick={onCancel}>
+            Cancel
+          </button>
+          <button
+            className="btn-primary"
+            style={{ flex: 1, background: confirmColor }}
+            onClick={onConfirm}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ReviewerHome({ user }) {
   const [view, setView] = useState("home");
   const [selectedSuggestion, setSelectedSuggestion] = useState(null);
@@ -34,29 +89,49 @@ function ReviewerHome({ user }) {
   const [qcdsmt, setQcdsmt] = useState([]);
   const [owners, setOwners] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [showRating, setShowRating] = useState(null);
   const [ratingStars, setRatingStars] = useState(0);
   const [ratingComment, setRatingComment] = useState("");
 
+  // Confirm dialog state
+  const [confirm, setConfirm] = useState(null); // { sug, newStatus, title, body, color }
+
+  // Search states
+  const [queueSearch, setQueueSearch] = useState("");
+  const [progressSearch, setProgressSearch] = useState("");
+
   const loadData = useCallback(async () => {
-    setLoading(true);
-    const [sugData, qData, oData, deptData] = await Promise.all([
-      getSuggestions(user),
-      getQCDSMT(),
-      getOwners(),
-      getDeptSuggestions(user.department),
-    ]);
-    setAllSuggestions(sugData);
-    setQcdsmt(qData);
-    setOwners(oData);
-    setDeptSuggestions(deptData);
-    setLoading(false);
+    setLoadError(null);
+    try {
+      const [sugData, qData, oData, deptData] = await Promise.all([
+        getSuggestions(user),
+        getQCDSMT(),
+        getOwners(),
+        getDeptSuggestions(user.department),
+      ]);
+      setAllSuggestions(sugData);
+      setQcdsmt(qData);
+      setOwners(oData);
+      setDeptSuggestions(deptData);
+    } catch (err) {
+      setLoadError("Failed to load data. Please check your connection.");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, [user]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  async function handleRefresh() {
+    setRefreshing(true);
+    await loadData();
+  }
 
   const today = new Date().toISOString().split("T")[0];
   const newCount = allSuggestions.filter((s) => s.status === "New").length;
@@ -87,22 +162,26 @@ function ReviewerHome({ user }) {
     if (decision === "Approve" && dueDate <= today) { setError("Due date must be in the future"); return; }
 
     setSaving(true);
-    await reviewSuggestion(selectedSuggestion.id, {
-      primaryImpact,
-      secondaryImpact,
-      reviewDecision: decision,
-      assignedOwner: owner,
-      dueDate: decision === "Approve" ? dueDate : "",
-      reviewerComment: comment,
-    });
-    setSaving(false);
-
-    setSuccess("Review saved! ✅");
-    setTimeout(async () => {
-      setSuccess("");
-      await loadData();
-      setView("home");
-    }, 1500);
+    try {
+      await reviewSuggestion(selectedSuggestion.id, {
+        primaryImpact,
+        secondaryImpact,
+        reviewDecision: decision,
+        assignedOwner: owner,
+        dueDate: decision === "Approve" ? dueDate : "",
+        reviewerComment: comment,
+      });
+      setSuccess("Review saved! ✅");
+      setTimeout(async () => {
+        setSuccess("");
+        await loadData();
+        setView("home");
+      }, 1500);
+    } catch (err) {
+      setError("Failed to save review. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleStatusChange(sug, newStatus, ratingExtras) {
@@ -115,15 +194,77 @@ function ReviewerHome({ user }) {
         extras.ratingComment = ratingExtras.ratingComment;
       }
     }
-    await updateSuggestionStatus(sug.id, newStatus, extras);
-    await loadData();
+    try {
+      await updateSuggestionStatus(sug.id, newStatus, extras);
+      await loadData();
+    } catch (err) {
+      // silently fail — data will be stale but not blocking
+    }
+  }
+
+  function requestStatusChange(sug, newStatus) {
+    const labels = {
+      Implementing: { title: "Mark as Implementing?", body: `This will move "${sug.id}" to Implementing status, indicating work has begun.`, color: "#8b5cf6", label: "Yes, Mark Implementing" },
+      Implemented: { title: "Mark as Implemented?", body: `This confirms "${sug.id}" has been fully implemented. You'll then be able to close and rate it.`, color: "#10b981", label: "Yes, Mark Implemented" },
+    };
+    const info = labels[newStatus];
+    if (info) {
+      setConfirm({ sug, newStatus, ...info });
+    } else {
+      handleStatusChange(sug, newStatus);
+    }
+  }
+
+  // Filter helpers
+  function filterQueue(list) {
+    const q = queueSearch.toLowerCase();
+    if (!q) return list;
+    return list.filter((s) =>
+      s.id?.toLowerCase().includes(q) ||
+      s.problem?.toLowerCase().includes(q) ||
+      s.suggestion?.toLowerCase().includes(q) ||
+      s.area?.toLowerCase().includes(q) ||
+      s.employeeName?.toLowerCase().includes(q)
+    );
+  }
+
+  function filterProgress(list) {
+    const q = progressSearch.toLowerCase();
+    if (!q) return list;
+    return list.filter((s) =>
+      s.id?.toLowerCase().includes(q) ||
+      s.problem?.toLowerCase().includes(q) ||
+      s.suggestion?.toLowerCase().includes(q) ||
+      s.area?.toLowerCase().includes(q) ||
+      s.assignedOwner?.toLowerCase().includes(q)
+    );
   }
 
   if (loading) {
-    return <div className="page" style={{ textAlign: "center", paddingTop: 60 }}>
-      <div style={{ fontSize: 32 }}>⏳</div>
-      <p>Loading...</p>
-    </div>;
+    return (
+      <div className="page">
+        <div className="skeleton-list">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="page">
+        <div className="error-state">
+          <div className="error-icon">⚠️</div>
+          <h3>Something went wrong</h3>
+          <p>{loadError}</p>
+          <button className="btn-primary" onClick={() => { setLoading(true); loadData(); }}>
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
   }
 
   // --- SUBMIT SUGGESTION ---
@@ -153,71 +294,41 @@ function ReviewerHome({ user }) {
     return (
       <div className="page">
         <button className="btn-back" onClick={() => setView("home")}>← Back</button>
-        <h2 className="page-title">📊 {dept} — Department Summary</h2>
+        <div className="page-title-row">
+          <h2 className="page-title">📊 {dept} — Department</h2>
+          <button className={"btn-refresh" + (refreshing ? " spinning" : "")} onClick={handleRefresh} title="Refresh">🔄</button>
+        </div>
 
         <div className="kpi-grid">
-          <div className="kpi-card">
-            <div className="kpi-icon">📋</div>
-            <div className="kpi-value" style={{ color: "#3b82f6" }}>{dTotal}</div>
-            <div className="kpi-label">Total</div>
-          </div>
-          <div className="kpi-card">
-            <div className="kpi-icon">📥</div>
-            <div className="kpi-value" style={{ color: "#f59e0b" }}>{dPending}</div>
-            <div className="kpi-label">Pending</div>
-          </div>
-          <div className="kpi-card">
-            <div className="kpi-icon">✅</div>
-            <div className="kpi-value" style={{ color: "#10b981" }}>{dApproved}</div>
-            <div className="kpi-label">Approved</div>
-          </div>
-          <div className="kpi-card">
-            <div className="kpi-icon">🎯</div>
-            <div className="kpi-value" style={{ color: "#6366f1" }}>{dCompleted}</div>
-            <div className="kpi-label">Completed</div>
-          </div>
-          <div className="kpi-card">
-            <div className="kpi-icon">⭐</div>
-            <div className="kpi-value" style={{ color: "#d97706" }}>{dAvgRating}</div>
-            <div className="kpi-label">Avg Rating</div>
-          </div>
-          <div className={"kpi-card" + (dOverdue > 0 ? " kpi-alert" : "")}>
-            <div className="kpi-icon">⏰</div>
-            <div className="kpi-value" style={{ color: dOverdue > 0 ? "#ef4444" : "#10b981" }}>{dOverdue}</div>
-            <div className="kpi-label">Overdue</div>
-          </div>
+          <div className="kpi-card"><div className="kpi-icon">📋</div><div className="kpi-value" style={{ color: "#3b82f6" }}>{dTotal}</div><div className="kpi-label">Total</div></div>
+          <div className="kpi-card"><div className="kpi-icon">📥</div><div className="kpi-value" style={{ color: "#f59e0b" }}>{dPending}</div><div className="kpi-label">Pending</div></div>
+          <div className="kpi-card"><div className="kpi-icon">✅</div><div className="kpi-value" style={{ color: "#10b981" }}>{dApproved}</div><div className="kpi-label">Approved</div></div>
+          <div className="kpi-card"><div className="kpi-icon">🎯</div><div className="kpi-value" style={{ color: "#6366f1" }}>{dCompleted}</div><div className="kpi-label">Completed</div></div>
+          <div className="kpi-card"><div className="kpi-icon">⭐</div><div className="kpi-value" style={{ color: "#d97706" }}>{dAvgRating}</div><div className="kpi-label">Avg Rating</div></div>
+          <div className={"kpi-card" + (dOverdue > 0 ? " kpi-alert" : "")}><div className="kpi-icon">⏰</div><div className="kpi-value" style={{ color: dOverdue > 0 ? "#ef4444" : "#10b981" }}>{dOverdue}</div><div className="kpi-label">Overdue</div></div>
         </div>
 
         <h3 style={{ margin: "20px 0 12px", fontSize: 16, fontWeight: 600 }}>All Suggestions in {dept} ({dTotal})</h3>
 
         {dTotal === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">📭</div>
-            <p>No suggestions for this department yet.</p>
-          </div>
+          <div className="empty-state"><div className="empty-icon">📭</div><p>No suggestions for this department yet.</p></div>
         ) : (
           <div className="suggestion-list">
             {deptSuggestions.map((s) => (
               <div key={s.id} className="suggestion-card">
                 <div className="suggestion-header">
                   <span className="suggestion-id">{s.id}</span>
-                  <span className="status-badge" style={{ background: (STATUS_COLORS[s.status] || "#94a3b8") + "18", color: STATUS_COLORS[s.status] || "#94a3b8" }}>
-                    {s.status}
-                  </span>
-                  {s.primaryImpact && (
-                    <span className="qcdsmt-dot" style={{ background: QCDSMT_COLORS[s.primaryImpact] }}>{s.primaryImpact}</span>
-                  )}
+                  <span className="status-badge" style={{ background: (STATUS_COLORS[s.status] || "#94a3b8") + "18", color: STATUS_COLORS[s.status] || "#94a3b8" }}>{s.status}</span>
+                  {s.primaryImpact && <span className="qcdsmt-dot" style={{ background: QCDSMT_COLORS[s.primaryImpact] }}>{s.primaryImpact}</span>}
                 </div>
                 <div className="suggestion-area">{s.employeeName} • {s.submittedDate}</div>
-                <div className="suggestion-problem"><strong>Problem:</strong> {s.problem}</div>
-                <div className="suggestion-text"><strong>Suggestion:</strong> {s.suggestion}</div>
+                <ExpandableText text={s.problem} label="Problem" />
+                <ExpandableText text={s.suggestion} label="Suggestion" />
                 {s.reviewerComment && <div className="reviewer-comment"><strong>Reviewer:</strong> {s.reviewerComment}</div>}
                 {s.assignedOwner && <div className="text-muted">Owner: {s.assignedOwner} | Due: {s.dueDate || "—"}</div>}
                 {s.impactRating > 0 && (
                   <div className="impact-rating-display">
-                    <div className="impact-stars">
-                      {"★".repeat(s.impactRating)}{"☆".repeat(5 - s.impactRating)}
-                    </div>
+                    <div className="impact-stars">{"★".repeat(s.impactRating)}{"☆".repeat(5 - s.impactRating)}</div>
                     <div className="impact-label">Impact Rating: {s.impactRating}/5</div>
                   </div>
                 )}
@@ -240,54 +351,52 @@ function ReviewerHome({ user }) {
         </div>
 
         <div className="stats-row">
-          <div className="stat-card">
-            <div className="stat-value">{allSuggestions.length}</div>
-            <div className="stat-label">Total</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-value" style={{ color: "#f59e0b" }}>{newCount}</div>
-            <div className="stat-label">New</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-value" style={{ color: "#8b5cf6" }}>{inProgress.length}</div>
-            <div className="stat-label">In Progress</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-value" style={{ color: overdueCount > 0 ? "#ef4444" : "#10b981" }}>{overdueCount}</div>
-            <div className="stat-label">Overdue</div>
-          </div>
+          <div className="stat-card"><div className="stat-value">{allSuggestions.length}</div><div className="stat-label">Total</div></div>
+          <div className="stat-card"><div className="stat-value" style={{ color: "#f59e0b" }}>{newCount}</div><div className="stat-label">New</div></div>
+          <div className="stat-card"><div className="stat-value" style={{ color: "#8b5cf6" }}>{inProgress.length}</div><div className="stat-label">In Progress</div></div>
+          <div className="stat-card"><div className="stat-value" style={{ color: overdueCount > 0 ? "#ef4444" : "#10b981" }}>{overdueCount}</div><div className="stat-label">Overdue</div></div>
         </div>
 
         <div className="action-cards">
           <button className="action-card action-submit" onClick={() => setView("submit")}>
             <span className="action-icon">💡</span>
-            <span className="action-title">Submit Suggestion</span>
-            <span className="action-desc">Share your own idea to improve SFL</span>
+            <span>
+              <span className="action-title">Submit Suggestion</span>
+              <span className="action-desc">Share your own idea to improve SFL</span>
+            </span>
           </button>
 
           <button className="action-card action-view" onClick={() => setView("my")}>
             <span className="action-icon">📋</span>
-            <span className="action-title">My Suggestions</span>
-            <span className="action-desc">Track your own submitted ideas</span>
+            <span>
+              <span className="action-title">My Suggestions</span>
+              <span className="action-desc">Track your own submitted ideas</span>
+            </span>
           </button>
 
           <button className="action-card action-progress" onClick={() => setView("dept")}>
             <span className="action-icon">🏢</span>
-            <span className="action-title">My Department</span>
-            <span className="action-desc">See all suggestions in {user.department || "your dept"}</span>
+            <span>
+              <span className="action-title">My Department</span>
+              <span className="action-desc">See all suggestions in {user.department || "your dept"}</span>
+            </span>
           </button>
 
-          <button className="action-card action-review" onClick={() => setView("queue")}>
+          <button className="action-card action-review" onClick={() => { setQueueSearch(""); setView("queue"); }}>
             <span className="action-icon">📥</span>
-            <span className="action-title">Review Queue</span>
-            <span className="action-desc">{newCount} suggestions awaiting review</span>
+            <span>
+              <span className="action-title">Review Queue</span>
+              <span className="action-desc">{newCount} suggestions awaiting review</span>
+            </span>
             {newCount > 0 && <span className="badge-red">{newCount}</span>}
           </button>
 
-          <button className="action-card action-progress" onClick={() => setView("progress")}>
+          <button className="action-card action-progress" onClick={() => { setProgressSearch(""); setView("progress"); }}>
             <span className="action-icon">⏳</span>
-            <span className="action-title">In Progress</span>
-            <span className="action-desc">{inProgress.length} active, {overdueCount} overdue</span>
+            <span>
+              <span className="action-title">In Progress</span>
+              <span className="action-desc">{inProgress.length} active, {overdueCount} overdue</span>
+            </span>
             {overdueCount > 0 && <span className="badge-red">{overdueCount}</span>}
           </button>
         </div>
@@ -298,41 +407,68 @@ function ReviewerHome({ user }) {
   // --- REVIEW QUEUE ---
   if (view === "queue") {
     const queue = allSuggestions.filter((s) => s.status === "New");
+    const filteredQueue = filterQueue(queue);
+
     return (
       <div className="page">
         <button className="btn-back" onClick={() => setView("home")}>← Back</button>
-        <h2 className="page-title">📥 Review Queue ({queue.length})</h2>
+        <div className="page-title-row">
+          <h2 className="page-title">📥 Review Queue ({queue.length})</h2>
+          <button className={"btn-refresh" + (refreshing ? " spinning" : "")} onClick={handleRefresh} title="Refresh">🔄</button>
+        </div>
+
+        {queue.length > 0 && (
+          <div className="filter-row">
+            <div className="search-input-wrap">
+              <span className="search-icon">🔍</span>
+              <input
+                className="search-input"
+                placeholder="Search by employee, area, problem..."
+                value={queueSearch}
+                onChange={(e) => setQueueSearch(e.target.value)}
+              />
+            </div>
+          </div>
+        )}
 
         {queue.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">✅</div>
             <p>All caught up! No pending reviews.</p>
           </div>
-        ) : (
-          <div className="suggestion-list">
-            {queue.map((s) => (
-              <div key={s.id} className="suggestion-card suggestion-clickable" onClick={() => openReview(s)}>
-                <div className="suggestion-header">
-                  <span className="suggestion-id">{s.id}</span>
-                  <span className="status-badge" style={{ background: "#94a3b818", color: "#94a3b8" }}>New</span>
-                </div>
-                <div className="suggestion-area">{s.area} • {s.employeeName} • {s.submittedDate}</div>
-                <div className="suggestion-problem"><strong>Problem:</strong> {s.problem}</div>
-                <div className="suggestion-text"><strong>Suggestion:</strong> {s.suggestion}</div>
-                {s.primaryImpact && (
-                  <div className="employee-qcdsmt-hint">
-                    💬 Employee thinks this is: <strong style={{ color: QCDSMT_COLORS[s.primaryImpact] }}>{s.primaryImpact} — {QCDSMT_LABELS[s.primaryImpact]}</strong>
-                  </div>
-                )}
-                {!s.primaryImpact && (
-                  <div className="employee-qcdsmt-hint" style={{ color: "#94a3b8" }}>
-                    💬 Employee wasn't sure about QCDSMT classification
-                  </div>
-                )}
-                <div className="tap-hint">Tap to review →</div>
-              </div>
-            ))}
+        ) : filteredQueue.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">🔍</div>
+            <p>No suggestions match your search.</p>
+            <button className="btn-back" onClick={() => setQueueSearch("")}>Clear search</button>
           </div>
+        ) : (
+          <>
+            <p className="results-count">Showing {filteredQueue.length} of {queue.length} suggestions</p>
+            <div className="suggestion-list">
+              {filteredQueue.map((s) => (
+                <div key={s.id} className="suggestion-card suggestion-clickable" onClick={() => openReview(s)}>
+                  <div className="suggestion-header">
+                    <span className="suggestion-id">{s.id}</span>
+                    <span className="status-badge" style={{ background: "#94a3b818", color: "#94a3b8" }}>New</span>
+                  </div>
+                  <div className="suggestion-area">{s.area} • {s.employeeName} • {s.submittedDate}</div>
+                  <ExpandableText text={s.problem} label="Problem" />
+                  <ExpandableText text={s.suggestion} label="Suggestion" />
+                  {s.primaryImpact ? (
+                    <div className="employee-qcdsmt-hint">
+                      💬 Employee thinks this is: <strong style={{ color: QCDSMT_COLORS[s.primaryImpact] }}>{s.primaryImpact} — {QCDSMT_LABELS[s.primaryImpact]}</strong>
+                    </div>
+                  ) : (
+                    <div className="employee-qcdsmt-hint" style={{ color: "#94a3b8" }}>
+                      💬 Employee wasn't sure about QCDSMT classification
+                    </div>
+                  )}
+                  <div className="tap-hint">Tap to review →</div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     );
@@ -344,7 +480,10 @@ function ReviewerHome({ user }) {
     return (
       <div className="page">
         <button className="btn-back" onClick={() => setView("home")}>← Back</button>
-        <h2 className="page-title">📋 My Suggestions ({mine.length})</h2>
+        <div className="page-title-row">
+          <h2 className="page-title">📋 My Suggestions ({mine.length})</h2>
+          <button className={"btn-refresh" + (refreshing ? " spinning" : "")} onClick={handleRefresh} title="Refresh">🔄</button>
+        </div>
         {mine.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📭</div>
@@ -361,8 +500,8 @@ function ReviewerHome({ user }) {
                   {s.primaryImpact && <span className="qcdsmt-dot" style={{ background: QCDSMT_COLORS[s.primaryImpact] || "#6366f1" }}>{s.primaryImpact}</span>}
                 </div>
                 <div className="suggestion-area">{s.area} • {s.submittedDate}</div>
-                <div className="suggestion-problem"><strong>Problem:</strong> {s.problem}</div>
-                <div className="suggestion-text"><strong>Suggestion:</strong> {s.suggestion}</div>
+                <ExpandableText text={s.problem} label="Problem" />
+                <ExpandableText text={s.suggestion} label="Suggestion" />
                 {s.reviewerComment && <div className="reviewer-comment"><strong>Reviewer:</strong> {s.reviewerComment}</div>}
                 {s.status === "Approved" && s.assignedOwner && (
                   <div className="status-info status-approved">✅ Approved — Assigned to {s.assignedOwner} {s.dueDate ? "(Due: " + s.dueDate + ")" : ""}</div>
@@ -389,62 +528,102 @@ function ReviewerHome({ user }) {
     const progressItems = allSuggestions.filter((s) =>
       ["Approved", "Implementing", "Implemented"].includes(s.status)
     );
+    const filteredProgress = filterProgress(progressItems);
+
     return (
       <div className="page">
         <button className="btn-back" onClick={() => setView("home")}>← Back</button>
-        <h2 className="page-title">⏳ In Progress ({progressItems.length})</h2>
+        <div className="page-title-row">
+          <h2 className="page-title">⏳ In Progress ({progressItems.length})</h2>
+          <button className={"btn-refresh" + (refreshing ? " spinning" : "")} onClick={handleRefresh} title="Refresh">🔄</button>
+        </div>
+
+        {progressItems.length > 0 && (
+          <div className="filter-row">
+            <div className="search-input-wrap">
+              <span className="search-icon">🔍</span>
+              <input
+                className="search-input"
+                placeholder="Search by area, owner, suggestion..."
+                value={progressSearch}
+                onChange={(e) => setProgressSearch(e.target.value)}
+              />
+            </div>
+          </div>
+        )}
 
         {progressItems.length === 0 ? (
+          <div className="empty-state"><div className="empty-icon">📭</div><p>No suggestions in progress.</p></div>
+        ) : filteredProgress.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">📭</div>
-            <p>No suggestions in progress.</p>
+            <div className="empty-icon">🔍</div>
+            <p>No items match your search.</p>
+            <button className="btn-back" onClick={() => setProgressSearch("")}>Clear search</button>
           </div>
         ) : (
-          <div className="suggestion-list">
-            {progressItems.map((s) => {
-              const isOverdue = s.dueDate && s.dueDate < today && s.status !== "Implemented";
-              return (
-                <div key={s.id} className={"suggestion-card" + (isOverdue ? " card-overdue" : "")}>
-                  <div className="suggestion-header">
-                    <span className="suggestion-id">{s.id}</span>
-                    <span className="status-badge" style={{ background: (STATUS_COLORS[s.status] || "#94a3b8") + "18", color: STATUS_COLORS[s.status] || "#94a3b8" }}>
-                      {s.status}
-                    </span>
-                    {isOverdue && <span className="overdue-tag">OVERDUE</span>}
-                  </div>
-                  <div className="suggestion-area">
-                    {s.area} • {s.assignedOwner} • Due: {s.dueDate || "—"}
-                  </div>
-                  <div className="suggestion-problem"><strong>Problem:</strong> {s.problem}</div>
-                  <div className="suggestion-text"><strong>Suggestion:</strong> {s.suggestion}</div>
-                  {s.primaryImpact && (
-                    <div className="qcdsmt-tag">{s.primaryImpact}{s.secondaryImpact ? " / " + s.secondaryImpact : ""}</div>
-                  )}
-                  {s.actionTaken && (
-                    <div className="action-taken"><strong>Action:</strong> {s.actionTaken}</div>
-                  )}
+          <>
+            <p className="results-count">Showing {filteredProgress.length} of {progressItems.length} items</p>
+            <div className="suggestion-list">
+              {filteredProgress.map((s) => {
+                const isOverdue = s.dueDate && s.dueDate < today && s.status !== "Implemented";
+                return (
+                  <div key={s.id} className={"suggestion-card" + (isOverdue ? " card-overdue" : "")}>
+                    <div className="suggestion-header">
+                      <span className="suggestion-id">{s.id}</span>
+                      <span className="status-badge" style={{ background: (STATUS_COLORS[s.status] || "#94a3b8") + "18", color: STATUS_COLORS[s.status] || "#94a3b8" }}>
+                        {s.status}
+                      </span>
+                      {isOverdue && <span className="overdue-tag">OVERDUE</span>}
+                    </div>
+                    <div className="suggestion-area">
+                      {s.area} • {s.assignedOwner} • Due: {s.dueDate || "—"}
+                    </div>
+                    <ExpandableText text={s.problem} label="Problem" />
+                    <ExpandableText text={s.suggestion} label="Suggestion" />
+                    {s.primaryImpact && (
+                      <div className="qcdsmt-tag">{s.primaryImpact}{s.secondaryImpact ? " / " + s.secondaryImpact : ""}</div>
+                    )}
+                    {s.actionTaken && (
+                      <div className="action-taken"><strong>Action:</strong> {s.actionTaken}</div>
+                    )}
 
-                  <div className="status-actions">
-                    {s.status === "Approved" && (
-                      <button className="btn-sm btn-purple" onClick={() => handleStatusChange(s, "Implementing")}>
-                        Mark Implementing
-                      </button>
-                    )}
-                    {s.status === "Implementing" && (
-                      <button className="btn-sm btn-green" onClick={() => handleStatusChange(s, "Implemented")}>
-                        Mark Implemented
-                      </button>
-                    )}
-                    {s.status === "Implemented" && (
-                      <button className="btn-sm btn-dark" onClick={() => { setShowRating(s); setRatingStars(0); setRatingComment(""); }}>
-                        Verify & Close
-                      </button>
-                    )}
+                    <div className="status-actions">
+                      {s.status === "Approved" && (
+                        <button className="btn-sm btn-purple" onClick={() => requestStatusChange(s, "Implementing")}>
+                          Mark Implementing
+                        </button>
+                      )}
+                      {s.status === "Implementing" && (
+                        <button className="btn-sm btn-green" onClick={() => requestStatusChange(s, "Implemented")}>
+                          Mark Implemented
+                        </button>
+                      )}
+                      {s.status === "Implemented" && (
+                        <button className="btn-sm btn-dark" onClick={() => { setShowRating(s); setRatingStars(0); setRatingComment(""); }}>
+                          Verify & Close
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {/* CONFIRM MODAL */}
+        {confirm && (
+          <ConfirmModal
+            title={confirm.title}
+            body={confirm.body}
+            confirmLabel={confirm.label}
+            confirmColor={confirm.color}
+            onConfirm={async () => {
+              await handleStatusChange(confirm.sug, confirm.newStatus);
+              setConfirm(null);
+            }}
+            onCancel={() => setConfirm(null)}
+          />
         )}
 
         {/* RATING MODAL */}
@@ -558,7 +737,6 @@ function ReviewerHome({ user }) {
         <form onSubmit={handleReview} className="form-card">
           <h3 className="form-section-title">A) QCDSMT Classification</h3>
 
-          {/* Show employee's original choice */}
           {s.primaryImpact ? (
             <div className="employee-choice-banner">
               💬 <strong>{s.employeeName}</strong> classified this as:
@@ -668,6 +846,9 @@ function ReviewerHome({ user }) {
               className="form-input form-textarea"
               maxLength={300}
             />
+            <span className={"char-count" + (comment.length > 270 ? " char-count-danger" : comment.length > 240 ? " char-count-warn" : "")}>
+              {comment.length}/300
+            </span>
           </div>
 
           {error && <div className="form-error">{error}</div>}

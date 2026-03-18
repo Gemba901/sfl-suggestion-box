@@ -1114,3 +1114,216 @@ body.dark-mode .kpi-value { color: inherit; }
 body.dark-mode .mode-toggle { border-color: #475569; }
 body.dark-mode .mode-toggle-btn { background: #1e293b; color: #94a3b8; border-color: #475569; }
 body.dark-mode .mode-toggle-active { background: #6366f1; color: #fff; }
+
+/* ================================================
+   NEW UX IMPROVEMENTS
+   ================================================ */
+
+/* --- PAGE TITLE ROW (title + refresh button side by side) --- */
+.page-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 8px;
+}
+.page-title-row .page-title { margin-bottom: 0; }
+
+/* --- REFRESH BUTTON --- */
+.btn-refresh {
+  padding: 6px 10px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 15px;
+  cursor: pointer;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.btn-refresh:hover { background: #f0f0ff; border-color: #6366f1; }
+.btn-refresh.spinning { animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* --- SEARCH + FILTER ROW --- */
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.search-input-wrap { flex: 1; position: relative; }
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  pointer-events: none;
+  color: #94a3b8;
+}
+.search-input {
+  width: 100%;
+  padding: 8px 12px 8px 32px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #0f172a;
+  background: #fff;
+  transition: border-color 0.15s;
+}
+.search-input:focus { outline: none; border-color: #6366f1; }
+
+.status-filter {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.filter-chip {
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  color: #64748b;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.filter-chip:hover { border-color: #cbd5e1; }
+.filter-chip-active { border-color: #6366f1; background: #6366f1; color: #fff; }
+
+/* --- SKELETON LOADING --- */
+.skeleton-list { display: flex; flex-direction: column; gap: 10px; }
+.skeleton-card {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #e8ecf2;
+  padding: 16px;
+}
+.skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  margin-bottom: 10px;
+}
+.skeleton-line:last-child { margin-bottom: 0; }
+.skeleton-short { width: 35%; }
+.skeleton-medium { width: 65%; }
+.skeleton-full { width: 100%; }
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* --- ERROR STATE --- */
+.error-state { text-align: center; padding: 40px 20px; }
+.error-icon { font-size: 48px; margin-bottom: 12px; }
+.error-state h3 { font-size: 16px; font-weight: 700; color: #dc2626; margin-bottom: 8px; }
+.error-state p { font-size: 14px; color: #94a3b8; margin-bottom: 16px; }
+
+/* --- CONFIRM MODAL --- */
+.confirm-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200; padding: 20px;
+}
+.confirm-modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 340px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.confirm-title { font-size: 17px; font-weight: 800; margin-bottom: 8px; color: #1e293b; }
+.confirm-body { font-size: 13px; color: #475569; margin-bottom: 20px; line-height: 1.6; }
+.confirm-actions { display: flex; gap: 8px; }
+
+/* --- EXPORT CSV BUTTON --- */
+.btn-export {
+  padding: 8px 14px;
+  border: 1.5px solid #10b981;
+  border-radius: 10px;
+  background: #fff;
+  color: #10b981;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.btn-export:hover { background: #f0fdf4; }
+
+/* --- CHARACTER COUNT COLORS --- */
+.char-count-warn { color: #f59e0b !important; }
+.char-count-danger { color: #ef4444 !important; font-weight: 700; }
+
+/* --- EXPAND / COLLAPSE LONG TEXT --- */
+.suggestion-text-truncated {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+.btn-expand {
+  background: none;
+  border: none;
+  color: #6366f1;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0 0;
+  font-family: inherit;
+  display: block;
+}
+.btn-expand:hover { text-decoration: underline; }
+
+/* --- RESULTS COUNT --- */
+.results-count {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 10px;
+}
+
+/* --- DARK MODE for new elements --- */
+body.dark-mode .btn-refresh { background: #1e293b; border-color: #334155; color: #e2e8f0; }
+body.dark-mode .btn-refresh:hover { background: #334155; border-color: #6366f1; }
+body.dark-mode .search-input { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+body.dark-mode .search-input:focus { border-color: #6366f1; }
+body.dark-mode .search-icon { color: #475569; }
+body.dark-mode .filter-chip { background: #1e293b; border-color: #334155; color: #94a3b8; }
+body.dark-mode .filter-chip:hover { border-color: #475569; }
+body.dark-mode .filter-chip-active { background: #6366f1; border-color: #6366f1; color: #fff; }
+body.dark-mode .skeleton-card { background: #1e293b; border-color: #334155; }
+body.dark-mode .skeleton-line {
+  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background-size: 200% 100%;
+}
+body.dark-mode .confirm-modal { background: #1e293b; }
+body.dark-mode .confirm-title { color: #f1f5f9; }
+body.dark-mode .confirm-body { color: #94a3b8; }
+body.dark-mode .btn-export { background: #1e293b; }
+body.dark-mode .btn-expand { color: #818cf8; }
+body.dark-mode .results-count { color: #64748b; }
+
+/* --- MOBILE HEADER IMPROVEMENTS --- */
+@media (max-width: 480px) {
+  .header-title { font-size: 13px; }
+  .header-role { font-size: 11px; }
+  .header-logo-img { width: 28px; height: 28px; }
+  .btn-logout { padding: 5px 10px; font-size: 12px; }
+  .app-header { padding: 10px 12px; }
+  .page { padding: 16px 12px; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .welcome-card { padding: 18px; }
+  .welcome-card h2 { font-size: 17px; }
+}
