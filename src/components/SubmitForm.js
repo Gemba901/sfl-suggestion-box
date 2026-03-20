@@ -28,6 +28,8 @@ function SubmitForm({ user, onBack, onSuccess }) {
   const [submitting, setSubmitting] = useState(false);
   const [draftRestored, setDraftRestored] = useState(false);
 
+  const isAreaLocked = user.role === "Employee" || user.role === "Reviewer";
+
   // Load areas + QCDSMT, then try to restore draft
   useEffect(() => {
     async function load() {
@@ -35,16 +37,21 @@ function SubmitForm({ user, onBack, onSuccess }) {
       setAreas(aData);
       setQcdsmt(qData);
 
+      // For employees and reviewers, lock area to their own department
+      if (isAreaLocked) {
+        setArea(user.area || user.department || "");
+      }
+
       // Restore draft from localStorage
       try {
         const saved = localStorage.getItem(DRAFT_KEY(user.name));
         if (saved) {
           const draft = JSON.parse(saved);
-          if (draft.area) setArea(draft.area);
+          if (!isAreaLocked && draft.area) setArea(draft.area);
           if (draft.problem) setProblem(draft.problem);
           if (draft.suggestion) setSuggestion(draft.suggestion);
           if (draft.selectedImpact) setSelectedImpact(draft.selectedImpact);
-          if (draft.area || draft.problem || draft.suggestion) {
+          if (draft.problem || draft.suggestion) {
             setDraftRestored(true);
           }
         }
@@ -53,7 +60,7 @@ function SubmitForm({ user, onBack, onSuccess }) {
       }
     }
     load();
-  }, [user.name]);
+  }, [user.name]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-save draft whenever form changes
   useEffect(() => {
@@ -152,16 +159,18 @@ function SubmitForm({ user, onBack, onSuccess }) {
           <input type="text" value={user.area || user.department || "Not assigned"} disabled className="form-input form-disabled" />
         </div>
 
-        <div className="form-group">
-          <label>Suggestion is about which department? <span className="required">*</span></label>
-          <p className="form-hint">Choose the department this suggestion relates to.</p>
-          <select value={area} onChange={(e) => setArea(e.target.value)} className="form-input">
-            <option value="">Select department...</option>
-            {areas.map((a) => (
-              <option key={a.id} value={a.area_name}>{a.area_name}</option>
-            ))}
-          </select>
-        </div>
+        {!isAreaLocked && (
+          <div className="form-group">
+            <label>Suggestion is about which department? <span className="required">*</span></label>
+            <p className="form-hint">Choose the department this suggestion relates to.</p>
+            <select value={area} onChange={(e) => setArea(e.target.value)} className="form-input">
+              <option value="">Select department...</option>
+              {areas.map((a) => (
+                <option key={a.id} value={a.area_name}>{a.area_name}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div className="form-group">
           <label>Problem <span className="required">*</span></label>
