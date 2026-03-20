@@ -1315,6 +1315,42 @@ body.dark-mode .btn-export { background: #1e293b; }
 body.dark-mode .btn-expand { color: #818cf8; }
 body.dark-mode .results-count { color: #64748b; }
 
+/* ================================================
+   RECHARTS — dark mode overrides
+   ================================================ */
+
+/* Tooltip wrapper */
+body.dark-mode .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: #0f172a !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+/* Legend text */
+body.dark-mode .recharts-legend-item-text { color: #94a3b8 !important; }
+
+/* Axis tick text */
+body.dark-mode .recharts-cartesian-axis-tick-value { fill: #94a3b8 !important; }
+
+/* Grid lines */
+body.dark-mode .recharts-cartesian-grid line { stroke: #334155 !important; }
+
+/* Pie / donut label text */
+body.dark-mode .recharts-pie-label-text { fill: #cbd5e1 !important; }
+
+/* Reference lines */
+body.dark-mode .recharts-reference-line line { stroke: #475569 !important; }
+
+/* Chart card wrapper — ensure chart svg background is transparent */
+.recharts-wrapper { background: transparent !important; }
+
+/* Dept rank badge dark mode */
+body.dark-mode [style*="--dept-rank-bg"],
+body.dark-mode div[style*="f0f9ff"] {
+  background: #172554 !important;
+  color: #93c5fd !important;
+}
+
 /* --- MOBILE HEADER IMPROVEMENTS --- */
 @media (max-width: 480px) {
   .header-title { font-size: 13px; }
