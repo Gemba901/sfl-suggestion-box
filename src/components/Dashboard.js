@@ -625,12 +625,23 @@ function Dashboard({ user }) {
             )}
             <div className="qcdsmt-summary">
               {qcdsmt.map((q) => {
-                const count = allSuggestions.filter((s) => s.primaryImpact === q.code).length;
-                if (!count) return null;
+                const primary = allSuggestions.filter((s) => s.primaryImpact === q.code).length;
+                const secondary = allSuggestions.filter((s) => s.secondaryImpact === q.code).length;
+                if (!primary && !secondary) return null;
                 return (
                   <div key={q.code} className="qcdsmt-summary-item" style={{ borderColor:QCDSMT_COLORS[q.code]+"30" }}>
                     <span className="qcdsmt-dot" style={{ background:QCDSMT_COLORS[q.code] }}>{q.code}</span>
-                    <span>{q.category}: <strong>{count}</strong> ({pct(count,total)}%)</span>
+                    <span style={{ flex:1 }}>{q.category}:</span>
+                    {primary > 0 && (
+                      <span className="qcdsmt-impact-pill qcdsmt-primary-pill">
+                        Primary: <strong>{primary}</strong> ({pct(primary,total)}%)
+                      </span>
+                    )}
+                    {secondary > 0 && (
+                      <span className="qcdsmt-impact-pill qcdsmt-secondary-pill">
+                        Secondary: <strong>{secondary}</strong> ({pct(secondary,total)}%)
+                      </span>
+                    )}
                   </div>
                 );
               })}
