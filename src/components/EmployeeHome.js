@@ -393,6 +393,13 @@ function EmployeeHome({ user }) {
                 <div className="suggestion-gemba">{s.gemba} • {s.submittedDate}</div>
                 <ExpandableText text={s.problem} label="Problem" />
                 <ExpandableText text={s.suggestion} label="Suggestion" />
+                {s.photo && (
+                  <div className="suggestion-media">
+                    {/\.(mp4|webm|mov)(\?|$)/i.test(s.photo)
+                      ? <video src={s.photo} controls />
+                      : <img src={s.photo} alt="Attachment" />}
+                  </div>
+                )}
 
                 {s.primaryImpact && (
                   <div className="qcdsmt-classification">

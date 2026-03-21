@@ -284,6 +284,28 @@ body {
 }
 
 .suggestion-gemba { font-size: 12px; color: #94a3b8; margin-bottom: 8px; }
+
+/* Media upload */
+.media-upload-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; padding: 24px 16px; border: 2px dashed #6366f1; border-radius: 14px;
+  cursor: pointer; background: #f8f7ff; transition: all 0.2s; text-align: center;
+}
+.media-upload-btn:hover { background: #eef2ff; border-color: #4f46e5; }
+.media-upload-icon { font-size: 32px; line-height: 1; }
+.media-upload-text { font-size: 13px; color: #6366f1; font-weight: 600; }
+.media-preview-wrap { position: relative; border-radius: 12px; overflow: hidden; background: #000; }
+.media-preview-img { width: 100%; max-height: 280px; object-fit: contain; display: block; border-radius: 12px; }
+.media-preview-video { width: 100%; max-height: 280px; border-radius: 12px; display: block; }
+.media-remove-btn {
+  position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); color: #fff;
+  border: none; border-radius: 20px; padding: 4px 12px; font-size: 12px; cursor: pointer;
+  font-family: inherit; font-weight: 600;
+}
+.media-remove-btn:hover { background: rgba(239,68,68,0.85); }
+.suggestion-media { margin-top: 10px; border-radius: 10px; overflow: hidden; }
+.suggestion-media img { width: 100%; max-height: 220px; object-fit: cover; display: block; border-radius: 10px; }
+.suggestion-media video { width: 100%; max-height: 220px; border-radius: 10px; display: block; }
 .suggestion-problem { font-size: 13px; color: #475569; margin-bottom: 4px; line-height: 1.5; }
 .suggestion-text { font-size: 13px; color: #475569; line-height: 1.5; }
 
@@ -941,6 +963,8 @@ body.dark-mode .suggestion-card {
 }
 body.dark-mode .suggestion-clickable:hover { border-color: #6366f1; box-shadow: 0 2px 8px rgba(99,102,241,0.15); }
 body.dark-mode .suggestion-gemba { color: #94a3b8; }
+body.dark-mode .media-upload-btn { background: #1e293b; border-color: #6366f1; }
+body.dark-mode .media-upload-btn:hover { background: #1e2a4a; }
 body.dark-mode .suggestion-problem { color: #cbd5e1; }
 body.dark-mode .suggestion-text { color: #cbd5e1; }
 body.dark-mode .suggestion-id { background: #6366f120; }

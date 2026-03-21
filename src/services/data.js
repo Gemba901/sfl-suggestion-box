@@ -159,8 +159,20 @@ export async function getNextId() {
   return "SUG-001";
 }
 
+// Upload a media file (image or video) to Supabase Storage
+export async function uploadMedia(file) {
+  const ext = file.name.split(".").pop();
+  const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const { data, error } = await supabase.storage
+    .from("suggestion-media")
+    .upload(fileName, file, { cacheControl: "3600", upsert: false });
+  if (error) { console.error("Upload error:", error); return null; }
+  const { data: urlData } = supabase.storage.from("suggestion-media").getPublicUrl(data.path);
+  return urlData.publicUrl;
+}
+
 // Submit a new suggestion (Employee/Reviewer/Management)
-export async function submitSuggestion(user, gemba, problem, suggestion, employeeImpact) {
+export async function submitSuggestion(user, gemba, problem, suggestion, employeeImpact, mediaUrl) {
   const newId = await getNextId();
   const { data, error } = await supabase
     .from("suggestions")
@@ -172,6 +184,7 @@ export async function submitSuggestion(user, gemba, problem, suggestion, employe
       problem: problem,
       suggestion: suggestion,
       primary_impact: employeeImpact || "",
+      photo_url: mediaUrl || null,
       status: "New",
     })
     .select()

@@ -152,6 +152,13 @@ function SuggestionCard({ s }) {
       <div className="suggestion-gemba">{s.gemba} • {s.employeeName} • {s.submittedDate}</div>
       <div className="suggestion-problem"><strong>Problem:</strong> {s.problem}</div>
       <div className="suggestion-text"><strong>Suggestion:</strong> {s.suggestion}</div>
+      {s.photo && (
+        <div className="suggestion-media">
+          {/\.(mp4|webm|mov)(\?|$)/i.test(s.photo)
+            ? <video src={s.photo} controls />
+            : <img src={s.photo} alt="Attachment" />}
+        </div>
+      )}
       {s.assignedOwner && <div className="text-muted">Owner: {s.assignedOwner} | Due: {s.dueDate||"—"}</div>}
       {s.impactRating > 0 && (
         <div className="impact-rating-display">
