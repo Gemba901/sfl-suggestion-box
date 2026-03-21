@@ -223,7 +223,7 @@ function ReviewerHome({ user }) {
       s.id?.toLowerCase().includes(q) ||
       s.problem?.toLowerCase().includes(q) ||
       s.suggestion?.toLowerCase().includes(q) ||
-      s.area?.toLowerCase().includes(q) ||
+      s.gemba?.toLowerCase().includes(q) ||
       s.employeeName?.toLowerCase().includes(q)
     );
   }
@@ -235,7 +235,7 @@ function ReviewerHome({ user }) {
       s.id?.toLowerCase().includes(q) ||
       s.problem?.toLowerCase().includes(q) ||
       s.suggestion?.toLowerCase().includes(q) ||
-      s.area?.toLowerCase().includes(q) ||
+      s.gemba?.toLowerCase().includes(q) ||
       s.assignedOwner?.toLowerCase().includes(q)
     );
   }
@@ -321,7 +321,7 @@ function ReviewerHome({ user }) {
                   <span className="status-badge" style={{ background: (STATUS_COLORS[s.status] || "#94a3b8") + "18", color: STATUS_COLORS[s.status] || "#94a3b8" }}>{s.status}</span>
                   {s.primaryImpact && <span className="qcdsmt-dot" style={{ background: QCDSMT_COLORS[s.primaryImpact] }}>{s.primaryImpact}</span>}
                 </div>
-                <div className="suggestion-area">{s.employeeName} • {s.submittedDate}</div>
+                <div className="suggestion-gemba">{s.employeeName} • {s.submittedDate}</div>
                 <ExpandableText text={s.problem} label="Problem" />
                 <ExpandableText text={s.suggestion} label="Suggestion" />
                 {s.reviewerComment && <div className="reviewer-comment"><strong>Reviewer:</strong> {s.reviewerComment}</div>}
@@ -423,7 +423,7 @@ function ReviewerHome({ user }) {
               <span className="search-icon">🔍</span>
               <input
                 className="search-input"
-                placeholder="Search by employee, area, problem..."
+                placeholder="Search by employee, gemba, problem..."
                 value={queueSearch}
                 onChange={(e) => setQueueSearch(e.target.value)}
               />
@@ -452,7 +452,7 @@ function ReviewerHome({ user }) {
                     <span className="suggestion-id">{s.id}</span>
                     <span className="status-badge" style={{ background: "#94a3b818", color: "#94a3b8" }}>New</span>
                   </div>
-                  <div className="suggestion-area">{s.area} • {s.employeeName} • {s.submittedDate}</div>
+                  <div className="suggestion-gemba">{s.gemba} • {s.employeeName} • {s.submittedDate}</div>
                   <ExpandableText text={s.problem} label="Problem" />
                   <ExpandableText text={s.suggestion} label="Suggestion" />
                   {s.primaryImpact ? (
@@ -499,7 +499,7 @@ function ReviewerHome({ user }) {
                   <span className="status-badge" style={{ background: (STATUS_COLORS[s.status] || "#94a3b8") + "18", color: STATUS_COLORS[s.status] || "#94a3b8" }}>{s.status}</span>
                   {s.primaryImpact && <span className="qcdsmt-dot" style={{ background: QCDSMT_COLORS[s.primaryImpact] || "#6366f1" }}>{s.primaryImpact}</span>}
                 </div>
-                <div className="suggestion-area">{s.area} • {s.submittedDate}</div>
+                <div className="suggestion-gemba">{s.gemba} • {s.submittedDate}</div>
                 <ExpandableText text={s.problem} label="Problem" />
                 <ExpandableText text={s.suggestion} label="Suggestion" />
                 {s.reviewerComment && <div className="reviewer-comment"><strong>Reviewer:</strong> {s.reviewerComment}</div>}
@@ -544,7 +544,7 @@ function ReviewerHome({ user }) {
               <span className="search-icon">🔍</span>
               <input
                 className="search-input"
-                placeholder="Search by area, owner, suggestion..."
+                placeholder="Search by gemba, owner, suggestion..."
                 value={progressSearch}
                 onChange={(e) => setProgressSearch(e.target.value)}
               />
@@ -575,8 +575,8 @@ function ReviewerHome({ user }) {
                       </span>
                       {isOverdue && <span className="overdue-tag">OVERDUE</span>}
                     </div>
-                    <div className="suggestion-area">
-                      {s.area} • {s.assignedOwner} • Due: {s.dueDate || "—"}
+                    <div className="suggestion-gemba">
+                      {s.gemba} • {s.assignedOwner} • Due: {s.dueDate || "—"}
                     </div>
                     <ExpandableText text={s.problem} label="Problem" />
                     <ExpandableText text={s.suggestion} label="Suggestion" />
@@ -634,7 +634,7 @@ function ReviewerHome({ user }) {
               <p className="rating-modal-sub">How much did this suggestion improve operations?</p>
 
               <div className="rating-info">
-                <strong>Area:</strong> {showRating.area} •
+                <strong>Gemba:</strong> {showRating.gemba} •
                 <strong> QCDSMT:</strong> {showRating.primaryImpact || "—"}
               </div>
               <div className="rating-info" style={{ marginTop: 4 }}>
@@ -717,8 +717,8 @@ function ReviewerHome({ user }) {
             <span className="review-value">{s.employeeName}</span>
           </div>
           <div className="review-field">
-            <span className="review-label">Department</span>
-            <span className="review-value">{s.area}</span>
+            <span className="review-label">Gemba</span>
+            <span className="review-value">{s.gemba}</span>
           </div>
           <div className="review-field">
             <span className="review-label">Date</span>

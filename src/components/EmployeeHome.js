@@ -97,7 +97,7 @@ function EmployeeHome({ user }) {
         s.id?.toLowerCase().includes(q) ||
         s.problem?.toLowerCase().includes(q) ||
         s.suggestion?.toLowerCase().includes(q) ||
-        s.area?.toLowerCase().includes(q) ||
+        s.gemba?.toLowerCase().includes(q) ||
         s.status?.toLowerCase().includes(q)
       );
       return matchStatus && matchSearch;
@@ -247,7 +247,7 @@ function EmployeeHome({ user }) {
                     <span className="qcdsmt-dot" style={{ background: QCDSMT_COLORS[s.primaryImpact] }}>{s.primaryImpact}</span>
                   )}
                 </div>
-                <div className="suggestion-area">{s.employeeName} • {s.submittedDate}</div>
+                <div className="suggestion-gemba">{s.employeeName} • {s.submittedDate}</div>
                 <ExpandableText text={s.problem} label="Problem" />
                 <ExpandableText text={s.suggestion} label="Suggestion" />
                 {s.reviewerComment && <div className="reviewer-comment"><strong>Reviewer:</strong> {s.reviewerComment}</div>}
@@ -345,7 +345,7 @@ function EmployeeHome({ user }) {
           <span className="search-icon">🔍</span>
           <input
             className="search-input"
-            placeholder="Search by keyword, status, area..."
+            placeholder="Search by keyword, status, gemba..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -390,7 +390,7 @@ function EmployeeHome({ user }) {
                     </span>
                   )}
                 </div>
-                <div className="suggestion-area">{s.area} • {s.submittedDate}</div>
+                <div className="suggestion-gemba">{s.gemba} • {s.submittedDate}</div>
                 <ExpandableText text={s.problem} label="Problem" />
                 <ExpandableText text={s.suggestion} label="Suggestion" />
 

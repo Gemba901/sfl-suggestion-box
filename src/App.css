@@ -283,7 +283,7 @@ body {
   border-radius: 6px;
 }
 
-.suggestion-area { font-size: 12px; color: #94a3b8; margin-bottom: 8px; }
+.suggestion-gemba { font-size: 12px; color: #94a3b8; margin-bottom: 8px; }
 .suggestion-problem { font-size: 13px; color: #475569; margin-bottom: 4px; line-height: 1.5; }
 .suggestion-text { font-size: 13px; color: #475569; line-height: 1.5; }
 
@@ -940,7 +940,7 @@ body.dark-mode .suggestion-card {
   background: #1e293b; border-color: #334155;
 }
 body.dark-mode .suggestion-clickable:hover { border-color: #6366f1; box-shadow: 0 2px 8px rgba(99,102,241,0.15); }
-body.dark-mode .suggestion-area { color: #94a3b8; }
+body.dark-mode .suggestion-gemba { color: #94a3b8; }
 body.dark-mode .suggestion-problem { color: #cbd5e1; }
 body.dark-mode .suggestion-text { color: #cbd5e1; }
 body.dark-mode .suggestion-id { background: #6366f120; }
