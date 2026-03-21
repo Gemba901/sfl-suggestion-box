@@ -77,10 +77,10 @@ function computeMonthlyData(suggestions) {
 function computeApprovalByDept(suggestions) {
   const stats = {};
   suggestions.forEach((s) => {
-    if (!s.area) return;
-    if (!stats[s.area]) stats[s.area] = { name: s.area, total: 0, approved: 0 };
-    stats[s.area].total++;
-    if (["Approved","Implementing","Implemented","Closed"].includes(s.status)) stats[s.area].approved++;
+    if (!s.gemba) return;
+    if (!stats[s.gemba]) stats[s.gemba] = { name: s.gemba, total: 0, approved: 0 };
+    stats[s.gemba].total++;
+    if (["Approved","Implementing","Implemented","Closed"].includes(s.status)) stats[s.gemba].approved++;
   });
   return Object.values(stats)
     .map((d) => ({ ...d, rate: d.total ? Math.round((100 * d.approved) / d.total) : 0 }))
@@ -95,7 +95,7 @@ function exportToCSV(suggestions) {
     "Closed Date","Closed By",
   ];
   const rows = suggestions.map((s) => [
-    s.id||"", s.submittedDate||"", s.employeeName||"", s.area||"", s.status||"",
+    s.id||"", s.submittedDate||"", s.employeeName||"", s.gemba||"", s.status||"",
     s.primaryImpact||"", s.secondaryImpact||"",
     `"${(s.problem||"").replace(/"/g,'""')}"`,
     `"${(s.suggestion||"").replace(/"/g,'""')}"`,
@@ -149,7 +149,7 @@ function SuggestionCard({ s }) {
         {s.primaryImpact && <span className="qcdsmt-dot" style={{ background: QCDSMT_COLORS[s.primaryImpact] }}>{s.primaryImpact}</span>}
         {s.impactRating > 0 && <span style={{ fontSize: 12, color: "#f59e0b", fontWeight: 700, marginLeft: "auto" }}>{"★".repeat(s.impactRating)}{"☆".repeat(5-s.impactRating)}</span>}
       </div>
-      <div className="suggestion-area">{s.area} • {s.employeeName} • {s.submittedDate}</div>
+      <div className="suggestion-gemba">{s.gemba} • {s.employeeName} • {s.submittedDate}</div>
       <div className="suggestion-problem"><strong>Problem:</strong> {s.problem}</div>
       <div className="suggestion-text"><strong>Suggestion:</strong> {s.suggestion}</div>
       {s.assignedOwner && <div className="text-muted">Owner: {s.assignedOwner} | Due: {s.dueDate||"—"}</div>}
@@ -280,10 +280,10 @@ function Dashboard({ user }) {
     Secondary: allSuggestions.filter((s) => s.secondaryImpact === q.code).length,
   })).filter((q) => q.Primary > 0 || q.Secondary > 0);
 
-  // Area/dept horizontal bar
-  const areaMap = {};
-  allSuggestions.forEach((s) => { if (s.area) areaMap[s.area] = (areaMap[s.area]||0)+1; });
-  const areaData = Object.entries(areaMap)
+  // Gemba/dept horizontal bar
+  const gembaMap = {};
+  allSuggestions.forEach((s) => { if (s.gemba) gembaMap[s.gemba] = (gembaMap[s.gemba]||0)+1; });
+  const gembaData = Object.entries(gembaMap)
     .sort((a,b) => b[1]-a[1])
     .map(([name,count],i) => ({ name, count, fill: DEPT_COLORS[i%DEPT_COLORS.length] }));
 
@@ -294,8 +294,8 @@ function Dashboard({ user }) {
   const approvalRateData = computeApprovalByDept(allSuggestions);
 
   // My dept
-  const myDept = user.department || user.area || "";
-  const deptSuggestions = myDept ? allSuggestions.filter((s) => s.area === myDept) : [];
+  const myDept = user.department || user.gemba || "";
+  const deptSuggestions = myDept ? allSuggestions.filter((s) => s.gemba === myDept) : [];
   const deptTotal = deptSuggestions.length;
   const deptNew = deptSuggestions.filter((s) => s.status === "New").length;
   const deptApproved = deptSuggestions.filter((s) => ["Approved","Implementing","Implemented","Closed"].includes(s.status)).length;
@@ -303,7 +303,7 @@ function Dashboard({ user }) {
   const deptOverdue = deptSuggestions.filter((s) => s.dueDate && s.dueDate < today && !["Closed","Implemented","Rejected"].includes(s.status));
   const deptRated = deptSuggestions.filter((s) => s.impactRating > 0);
   const deptAvgRating = deptRated.length > 0 ? (deptRated.reduce((sum,s) => sum+s.impactRating, 0) / deptRated.length).toFixed(1) : "—";
-  const deptRank = areaData.findIndex((a) => a.name === myDept) + 1;
+  const deptRank = gembaData.findIndex((a) => a.name === myDept) + 1;
   const deptStatusCounts = {};
   deptSuggestions.forEach((s) => { deptStatusCounts[s.status] = (deptStatusCounts[s.status]||0)+1; });
   const deptDonutData = Object.entries(deptStatusCounts).map(([name,value]) => ({ name, value }));
@@ -318,7 +318,7 @@ function Dashboard({ user }) {
     const q = allSearch.toLowerCase();
     const matchSearch = !q || (
       s.id?.toLowerCase().includes(q) ||
-      s.area?.toLowerCase().includes(q) ||
+      s.gemba?.toLowerCase().includes(q) ||
       s.employeeName?.toLowerCase().includes(q) ||
       s.problem?.toLowerCase().includes(q) ||
       s.suggestion?.toLowerCase().includes(q) ||
@@ -331,7 +331,7 @@ function Dashboard({ user }) {
     { k: "overview", l: "Overview" },
     ...(myDept ? [{ k: "mydept", l: "My Dept" }] : []),
     { k: "qcdsmt", l: "QCDSMT" },
-    { k: "areas", l: "By Area" },
+    { k: "gembas", l: "By Gemba" },
     { k: "all", l: "All" },
   ];
 
@@ -440,14 +440,14 @@ function Dashboard({ user }) {
           <div className="chart-card">
             <h3 className="chart-title">🏢 Suggestions by Department</h3>
             <p className="chart-subtitle">Which departments are contributing the most ideas?</p>
-            <ResponsiveContainer width="100%" height={Math.max(180, areaData.length * 38)}>
-              <BarChart data={areaData} layout="vertical" margin={{ top:4, right:48, left:4, bottom:0 }}>
+            <ResponsiveContainer width="100%" height={Math.max(180, gembaData.length * 38)}>
+              <BarChart data={gembaData} layout="vertical" margin={{ top:4, right:48, left:4, bottom:0 }}>
                 <CartesianGrid {...cp.grid} horizontal={false} />
                 <XAxis type="number" {...cp.axis} allowDecimals={false} />
                 <YAxis type="category" dataKey="name" width={90} {...cp.axis} />
                 <Tooltip {...cp.tip} />
                 <Bar dataKey="count" name="Suggestions" radius={[0,6,6,0]} label={{ position:"right", fill:theme.text, fontSize:11, fontWeight:700 }}>
-                  {areaData.map((entry) => (
+                  {gembaData.map((entry) => (
                     <Cell key={entry.name} fill={entry.fill} />
                   ))}
                 </Bar>
@@ -455,7 +455,7 @@ function Dashboard({ user }) {
             </ResponsiveContainer>
             {myDept && deptRank > 0 && (
               <div style={{ marginTop:12, padding:"8px 12px", borderRadius:8, background:"var(--dept-rank-bg,#f0f9ff)", fontSize:13, color:"var(--dept-rank-color,#1e40af)", fontWeight:600 }}>
-                📍 {myDept} is ranked #{deptRank} of {areaData.length} departments
+                📍 {myDept} is ranked #{deptRank} of {gembaData.length} departments
               </div>
             )}
           </div>
@@ -464,7 +464,7 @@ function Dashboard({ user }) {
           {approvalRateData.length > 0 && (
             <div className="chart-card">
               <h3 className="chart-title">✅ Approval Rate by Department</h3>
-              <p className="chart-subtitle">What percentage of suggestions get approved per area?</p>
+              <p className="chart-subtitle">What percentage of suggestions get approved per gemba?</p>
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={approvalRateData} margin={{ top:4, right:8, left:-18, bottom:36 }}>
                   <CartesianGrid {...cp.grid} />
@@ -633,19 +633,19 @@ function Dashboard({ user }) {
       )}
 
       {/* ══════════════ BY AREA ══════════════ */}
-      {tab === "areas" && (
+      {tab === "gembas" && (
         <div className="chart-section">
           <div className="chart-card">
-            <h3 className="chart-title">Suggestions by Area</h3>
-            <p className="chart-subtitle">Which areas are most active?</p>
-            <ResponsiveContainer width="100%" height={Math.max(200, areaData.length * 38)}>
-              <BarChart data={areaData} layout="vertical" margin={{ top:4, right:48, left:4, bottom:0 }}>
+            <h3 className="chart-title">Suggestions by Gemba</h3>
+            <p className="chart-subtitle">Which gembas are most active?</p>
+            <ResponsiveContainer width="100%" height={Math.max(200, gembaData.length * 38)}>
+              <BarChart data={gembaData} layout="vertical" margin={{ top:4, right:48, left:4, bottom:0 }}>
                 <CartesianGrid {...cp.grid} horizontal={false} />
                 <XAxis type="number" {...cp.axis} allowDecimals={false} />
                 <YAxis type="category" dataKey="name" width={90} {...cp.axis} />
                 <Tooltip {...cp.tip} />
                 <Bar dataKey="count" name="Suggestions" radius={[0,6,6,0]} label={{ position:"right", fill:theme.text, fontSize:12, fontWeight:700 }}>
-                  {areaData.map((entry) => (
+                  {gembaData.map((entry) => (
                     <Cell key={entry.name} fill={entry.fill} />
                   ))}
                 </Bar>
@@ -663,7 +663,7 @@ function Dashboard({ user }) {
               <span className="search-icon">🔍</span>
               <input
                 className="search-input"
-                placeholder="Search by employee, area, ID, suggestion..."
+                placeholder="Search by employee, gemba, ID, suggestion..."
                 value={allSearch}
                 onChange={(e) => setAllSearch(e.target.value)}
               />

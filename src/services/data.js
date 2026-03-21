@@ -20,7 +20,7 @@ export async function loginUser(name, phone) {
 }
 
 // Get all active departments (unique)
-export async function getAreas() {
+export async function getGembas() {
   const { data } = await supabase
     .from("areas")
     .select("*")
@@ -36,7 +36,7 @@ export async function getAreas() {
     const name = row.department_name;
     if (name && !seen.has(name)) {
       seen.add(name);
-      unique.push({ id: row.id, area_name: name });
+      unique.push({ id: row.id, gemba_name: name });
     }
   });
   return unique;
@@ -70,7 +70,7 @@ export async function getOwners() {
   return (data || []).map((e) => ({
     name: e.name,
     title: e.owner_title,
-    area: e.department,
+    gemba: e.department,
   }));
 }
 
@@ -91,7 +91,7 @@ export async function getSuggestions(user) {
     dbId: s.id,
     employeeName: s.employee_name,
     submittedDate: s.submitted_date,
-    area: s.area,
+    gemba: s.area,
     problem: s.problem,
     suggestion: s.suggestion,
     photo: s.photo_url,
@@ -125,7 +125,7 @@ export async function getDeptSuggestions(department) {
     dbId: s.id,
     employeeName: s.employee_name,
     submittedDate: s.submitted_date,
-    area: s.area,
+    gemba: s.area,
     problem: s.problem,
     suggestion: s.suggestion,
     photo: s.photo_url,
@@ -160,7 +160,7 @@ export async function getNextId() {
 }
 
 // Submit a new suggestion (Employee/Reviewer/Management)
-export async function submitSuggestion(user, area, problem, suggestion, employeeImpact) {
+export async function submitSuggestion(user, gemba, problem, suggestion, employeeImpact) {
   const newId = await getNextId();
   const { data, error } = await supabase
     .from("suggestions")
@@ -168,7 +168,7 @@ export async function submitSuggestion(user, area, problem, suggestion, employee
       suggestion_id: newId,
       employee_name: user.name,
       submitted_date: new Date().toISOString().split("T")[0],
-      area: area,
+      area: gemba,
       problem: problem,
       suggestion: suggestion,
       primary_impact: employeeImpact || "",

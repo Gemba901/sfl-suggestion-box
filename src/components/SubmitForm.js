@@ -1,6 +1,6 @@
 // src/components/SubmitForm.js
 import { useState, useEffect } from "react";
-import { getAreas, getQCDSMT, submitSuggestion } from "../services/data";
+import { getGembas, getQCDSMT, submitSuggestion } from "../services/data";
 
 const QCDSMT_COLORS = {
   Q: "#2563eb", C: "#059669", D: "#d97706", S: "#dc2626", M: "#7c3aed", T: "#0891b2",
@@ -16,30 +16,30 @@ function charCountClass(len, max) {
 }
 
 function SubmitForm({ user, onBack, onSuccess }) {
-  const [area, setArea] = useState("");
+  const [gemba, setGemba] = useState("");
   const [problem, setProblem] = useState("");
   const [suggestion, setSuggestion] = useState("");
   const [selectedImpact, setSelectedImpact] = useState("");
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
-  const [areas, setAreas] = useState([]);
+  const [gembas, setGembas] = useState([]);
   const [qcdsmt, setQcdsmt] = useState([]);
   const QCDSMT_ORDER = ["Q", "C", "D", "S", "M", "T"];
   const [submitting, setSubmitting] = useState(false);
   const [draftRestored, setDraftRestored] = useState(false);
 
-  const isAreaLocked = user.role === "Employee" || user.role === "Reviewer";
+  const isGembaLocked = user.role === "Employee" || user.role === "Reviewer";
 
-  // Load areas + QCDSMT, then try to restore draft
+  // Load gembas + QCDSMT, then try to restore draft
   useEffect(() => {
     async function load() {
-      const [aData, qData] = await Promise.all([getAreas(), getQCDSMT()]);
-      setAreas(aData);
+      const [aData, qData] = await Promise.all([getGembas(), getQCDSMT()]);
+      setGembas(aData);
       setQcdsmt(qData);
 
-      // For employees and reviewers, lock area to their own department
-      if (isAreaLocked) {
-        setArea(user.area || user.department || "");
+      // For employees and reviewers, lock gemba to their own department
+      if (isGembaLocked) {
+        setGemba(user.gemba || user.department || "");
       }
 
       // Restore draft from localStorage
@@ -47,7 +47,7 @@ function SubmitForm({ user, onBack, onSuccess }) {
         const saved = localStorage.getItem(DRAFT_KEY(user.name));
         if (saved) {
           const draft = JSON.parse(saved);
-          if (!isAreaLocked && draft.area) setArea(draft.area);
+          if (!isGembaLocked && draft.gemba) setGemba(draft.gemba);
           if (draft.problem) setProblem(draft.problem);
           if (draft.suggestion) setSuggestion(draft.suggestion);
           if (draft.selectedImpact) setSelectedImpact(draft.selectedImpact);
@@ -64,13 +64,13 @@ function SubmitForm({ user, onBack, onSuccess }) {
 
   // Auto-save draft whenever form changes
   useEffect(() => {
-    if (!problem && !suggestion && !area && !selectedImpact) return;
+    if (!problem && !suggestion && !gemba && !selectedImpact) return;
     try {
-      localStorage.setItem(DRAFT_KEY(user.name), JSON.stringify({ area, problem, suggestion, selectedImpact }));
+      localStorage.setItem(DRAFT_KEY(user.name), JSON.stringify({ gemba, problem, suggestion, selectedImpact }));
     } catch (e) {
       // Ignore storage errors
     }
-  }, [area, problem, suggestion, selectedImpact, user.name]);
+  }, [gemba, problem, suggestion, selectedImpact, user.name]);
 
   function clearDraft() {
     try {
@@ -80,7 +80,7 @@ function SubmitForm({ user, onBack, onSuccess }) {
 
   function handleDiscardDraft() {
     clearDraft();
-    setArea("");
+    setGemba("");
     setProblem("");
     setSuggestion("");
     setSelectedImpact("");
@@ -91,19 +91,19 @@ function SubmitForm({ user, onBack, onSuccess }) {
     e.preventDefault();
     setError("");
 
-    if (!area) { setError("Please select a department"); return; }
+    if (!gemba) { setError("Please select a gemba"); return; }
     if (problem.trim().length < 10) { setError("Problem must be at least 10 characters"); return; }
     if (suggestion.trim().length < 10) { setError("Suggestion must be at least 10 characters"); return; }
     if (!selectedImpact) { setError("Please select where your suggestion improves, or choose \"I'm not sure\""); return; }
 
     setSubmitting(true);
     const impact = selectedImpact === "NOT_SURE" ? "" : selectedImpact;
-    const result = await submitSuggestion(user, area, problem.trim(), suggestion.trim(), impact);
+    const result = await submitSuggestion(user, gemba, problem.trim(), suggestion.trim(), impact);
     setSubmitting(false);
 
     if (result) {
       clearDraft();
-      setArea("");
+      setGemba("");
       setProblem("");
       setSuggestion("");
       setSelectedImpact("");
@@ -155,18 +155,18 @@ function SubmitForm({ user, onBack, onSuccess }) {
         </div>
 
         <div className="form-group">
-          <label>Your Department</label>
-          <input type="text" value={user.area || user.department || "Not assigned"} disabled className="form-input form-disabled" />
+          <label>Your Gemba</label>
+          <input type="text" value={user.gemba || user.department || "Not assigned"} disabled className="form-input form-disabled" />
         </div>
 
-        {!isAreaLocked && (
+        {!isGembaLocked && (
           <div className="form-group">
-            <label>Suggestion is about which department? <span className="required">*</span></label>
-            <p className="form-hint">Choose the department this suggestion relates to.</p>
-            <select value={area} onChange={(e) => setArea(e.target.value)} className="form-input">
-              <option value="">Select department...</option>
-              {areas.map((a) => (
-                <option key={a.id} value={a.area_name}>{a.area_name}</option>
+            <label>Suggestion is about which gemba? <span className="required">*</span></label>
+            <p className="form-hint">Choose the gemba this suggestion relates to.</p>
+            <select value={gemba} onChange={(e) => setGemba(e.target.value)} className="form-input">
+              <option value="">Select gemba...</option>
+              {gembas.map((a) => (
+                <option key={a.id} value={a.gemba_name}>{a.gemba_name}</option>
               ))}
             </select>
           </div>
@@ -203,7 +203,7 @@ function SubmitForm({ user, onBack, onSuccess }) {
         {/* QCDSMT SELECTOR */}
         <div className="form-group">
           <label>Where does your suggestion improve? <span className="required">*</span></label>
-          <p className="form-hint">Select the area your idea impacts most. Not sure? That's okay — just pick "I'm not sure" and the reviewer will classify it.</p>
+          <p className="form-hint">Select the gemba your idea impacts most. Not sure? That's okay — just pick "I'm not sure" and the reviewer will classify it.</p>
 
           <div className="qcdsmt-submit-grid">
             {[...qcdsmt].sort((a, b) => QCDSMT_ORDER.indexOf(a.code) - QCDSMT_ORDER.indexOf(b.code)).map((q) => (
