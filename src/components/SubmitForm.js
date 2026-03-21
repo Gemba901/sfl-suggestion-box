@@ -271,17 +271,23 @@ function SubmitForm({ user, onBack, onSuccess }) {
           <p className="form-hint">Attach an image or video to show the problem or your suggestion visually.</p>
 
           {!mediaPreview ? (
-            <label className="media-upload-btn">
-              <input
-                type="file"
-                accept="image/*,video/*"
-                capture="environment"
-                onChange={handleMediaChange}
-                style={{ display: "none" }}
-              />
-              <span className="media-upload-icon">📷</span>
-              <span className="media-upload-text">Take Photo / Record Video / Upload File</span>
-            </label>
+            <div className="media-options">
+              <label className="media-option-btn">
+                <input type="file" accept="image/*" capture="environment" onChange={handleMediaChange} style={{ display: "none" }} />
+                <span className="media-option-icon">📷</span>
+                <span className="media-option-label">Take Photo</span>
+              </label>
+              <label className="media-option-btn">
+                <input type="file" accept="video/*" capture="environment" onChange={handleMediaChange} style={{ display: "none" }} />
+                <span className="media-option-icon">🎥</span>
+                <span className="media-option-label">Record Video</span>
+              </label>
+              <label className="media-option-btn">
+                <input type="file" accept="image/*,video/*" onChange={handleMediaChange} style={{ display: "none" }} />
+                <span className="media-option-icon">🖼️</span>
+                <span className="media-option-label">Upload File</span>
+              </label>
+            </div>
           ) : (
             <div className="media-preview-wrap">
               {mediaType === "image" ? (
