@@ -120,7 +120,7 @@ function chartProps(theme) {
   return {
     axis: { tick: { fill: theme.text, fontSize: 11 }, axisLine: { stroke: theme.grid }, tickLine: false },
     grid: { stroke: theme.grid, strokeDasharray: "3 3" },
-    tip:  { contentStyle: { background: theme.tipBg, border: `1px solid ${theme.tipBorder}`, borderRadius: 10, fontSize: 13, boxShadow: "0 4px 20px rgba(0,0,0,.12)" }, labelStyle: { color: theme.text, fontWeight: 700 } },
+    tip:  { contentStyle: { background: theme.tipBg, border: `1px solid ${theme.tipBorder}`, borderRadius: 10, fontSize: 13, boxShadow: "0 4px 20px rgba(0,0,0,.12)" }, labelStyle: { color: theme.text, fontWeight: 700 }, itemStyle: { color: isDark ? "#e2e8f0" : "#1e293b" } },
     leg:  { wrapperStyle: { fontSize: 12, color: theme.text } },
   };
 }
@@ -436,6 +436,8 @@ function Dashboard({ user }) {
                 </Pie>
                 <Tooltip
                   contentStyle={{ background:theme.tipBg, border:`1px solid ${theme.tipBorder}`, borderRadius:10, fontSize:13 }}
+                  itemStyle={{ color: isDark ? "#e2e8f0" : "#1e293b" }}
+                  labelStyle={{ color: isDark ? "#94a3b8" : "#64748b", fontWeight:700 }}
                   formatter={(value, name) => [`${value} (${pct(value,total)}%)`, name]}
                 />
                 <Legend {...cp.leg} />
@@ -539,6 +541,8 @@ function Dashboard({ user }) {
                   </Pie>
                   <Tooltip
                     contentStyle={{ background:theme.tipBg, border:`1px solid ${theme.tipBorder}`, borderRadius:10, fontSize:13 }}
+                    itemStyle={{ color: isDark ? "#e2e8f0" : "#1e293b" }}
+                    labelStyle={{ color: isDark ? "#94a3b8" : "#64748b", fontWeight:700 }}
                     formatter={(value, name) => [`${value} (${pct(value,deptTotal)}%)`, name]}
                   />
                   <Legend {...cp.leg} />
@@ -624,27 +628,32 @@ function Dashboard({ user }) {
               <div className="empty-state"><div className="empty-icon">📊</div><p>No QCDSMT data yet</p></div>
             )}
             <div className="qcdsmt-summary">
+              <p className="qcdsmt-summary-heading">Primary Impact</p>
               {qcdsmt.map((q) => {
-                const primary = allSuggestions.filter((s) => s.primaryImpact === q.code).length;
-                const secondary = allSuggestions.filter((s) => s.secondaryImpact === q.code).length;
-                if (!primary && !secondary) return null;
+                const count = allSuggestions.filter((s) => s.primaryImpact === q.code).length;
+                if (!count) return null;
                 return (
-                  <div key={q.code} className="qcdsmt-summary-item" style={{ borderColor:QCDSMT_COLORS[q.code]+"30" }}>
+                  <div key={q.code} className="qcdsmt-summary-item" style={{ borderColor:QCDSMT_COLORS[q.code]+"50" }}>
                     <span className="qcdsmt-dot" style={{ background:QCDSMT_COLORS[q.code] }}>{q.code}</span>
-                    <span style={{ flex:1 }}>{q.category}:</span>
-                    {primary > 0 && (
-                      <span className="qcdsmt-impact-pill qcdsmt-primary-pill">
-                        Primary: <strong>{primary}</strong> ({pct(primary,total)}%)
-                      </span>
-                    )}
-                    {secondary > 0 && (
-                      <span className="qcdsmt-impact-pill qcdsmt-secondary-pill">
-                        Secondary: <strong>{secondary}</strong> ({pct(secondary,total)}%)
-                      </span>
-                    )}
+                    <span>{q.category}: <strong>{count}</strong> ({pct(count,total)}%)</span>
                   </div>
                 );
               })}
+              {qcdsmt.some((q) => allSuggestions.some((s) => s.secondaryImpact === q.code)) && (
+                <>
+                  <p className="qcdsmt-summary-heading" style={{ marginTop:14 }}>Secondary Impact</p>
+                  {qcdsmt.map((q) => {
+                    const count = allSuggestions.filter((s) => s.secondaryImpact === q.code).length;
+                    if (!count) return null;
+                    return (
+                      <div key={q.code} className="qcdsmt-summary-item qcdsmt-summary-secondary" style={{ borderColor:QCDSMT_COLORS[q.code]+"50" }}>
+                        <span className="qcdsmt-dot" style={{ background:QCDSMT_COLORS[q.code], opacity:0.7 }}>{q.code}</span>
+                        <span>{q.category}: <strong>{count}</strong> ({pct(count,total)}%)</span>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
             </div>
           </div>
         </div>
