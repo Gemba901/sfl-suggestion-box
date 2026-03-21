@@ -457,6 +457,13 @@ function ReviewerHome({ user }) {
                   <div className="suggestion-gemba">{s.gemba} • {s.employeeName} • {s.submittedDate}</div>
                   <ExpandableText text={s.problem} label="Problem" />
                   <ExpandableText text={s.suggestion} label="Suggestion" />
+                  {s.photo && (
+                    <div className="suggestion-media">
+                      {/\.(mp4|webm|mov)(\?|$)/i.test(s.photo)
+                        ? <video src={s.photo} controls onClick={(e) => e.stopPropagation()} />
+                        : <img src={s.photo} alt="Attachment" />}
+                    </div>
+                  )}
                   {s.primaryImpact ? (
                     <div className="employee-qcdsmt-hint">
                       💬 Employee thinks this is: <strong style={{ color: QCDSMT_COLORS[s.primaryImpact] }}>{s.primaryImpact} — {QCDSMT_LABELS[s.primaryImpact]}</strong>
@@ -722,6 +729,16 @@ function ReviewerHome({ user }) {
             <span className="review-label">Gemba</span>
             <span className="review-value">{s.gemba}</span>
           </div>
+          {s.photo && (
+            <div className="review-field-full">
+              <span className="review-label">Attachment</span>
+              <div className="suggestion-media" style={{ marginTop: 6 }}>
+                {/\.(mp4|webm|mov)(\?|$)/i.test(s.photo)
+                  ? <video src={s.photo} controls />
+                  : <img src={s.photo} alt="Attachment" />}
+              </div>
+            </div>
+          )}
           <div className="review-field">
             <span className="review-label">Date</span>
             <span className="review-value">{s.submittedDate}</span>

@@ -1,6 +1,6 @@
 // src/components/SubmitForm.js
 import { useState, useEffect } from "react";
-import { getGembas, getQCDSMT, submitSuggestion } from "../services/data";
+import { getGembas, getQCDSMT, submitSuggestion, uploadMedia } from "../services/data";
 
 const QCDSMT_COLORS = {
   Q: "#2563eb", C: "#059669", D: "#d97706", S: "#dc2626", M: "#7c3aed", T: "#0891b2",
@@ -27,6 +27,9 @@ function SubmitForm({ user, onBack, onSuccess }) {
   const QCDSMT_ORDER = ["Q", "C", "D", "S", "M", "T"];
   const [submitting, setSubmitting] = useState(false);
   const [draftRestored, setDraftRestored] = useState(false);
+  const [mediaFile, setMediaFile] = useState(null);
+  const [mediaPreview, setMediaPreview] = useState(null);
+  const [mediaType, setMediaType] = useState(null); // "image" | "video"
 
   const isGembaLocked = user.role === "Employee" || user.role === "Reviewer";
 
@@ -72,6 +75,21 @@ function SubmitForm({ user, onBack, onSuccess }) {
     }
   }, [gemba, problem, suggestion, selectedImpact, user.name]);
 
+  function handleMediaChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const isVideo = file.type.startsWith("video/");
+    setMediaFile(file);
+    setMediaType(isVideo ? "video" : "image");
+    setMediaPreview(URL.createObjectURL(file));
+  }
+
+  function removeMedia() {
+    setMediaFile(null);
+    setMediaPreview(null);
+    setMediaType(null);
+  }
+
   function clearDraft() {
     try {
       localStorage.removeItem(DRAFT_KEY(user.name));
@@ -98,7 +116,12 @@ function SubmitForm({ user, onBack, onSuccess }) {
 
     setSubmitting(true);
     const impact = selectedImpact === "NOT_SURE" ? "" : selectedImpact;
-    const result = await submitSuggestion(user, gemba, problem.trim(), suggestion.trim(), impact);
+    let mediaUrl = null;
+    if (mediaFile) {
+      mediaUrl = await uploadMedia(mediaFile);
+      if (!mediaUrl) { setError("Failed to upload media. Please try again."); setSubmitting(false); return; }
+    }
+    const result = await submitSuggestion(user, gemba, problem.trim(), suggestion.trim(), impact, mediaUrl);
     setSubmitting(false);
 
     if (result) {
@@ -108,6 +131,9 @@ function SubmitForm({ user, onBack, onSuccess }) {
       setSuggestion("");
       setSelectedImpact("");
       setDraftRestored(false);
+      setMediaFile(null);
+      setMediaPreview(null);
+      setMediaType(null);
       setSuccess("Suggestion submitted successfully! 🎉");
       setTimeout(() => {
         setSuccess("");
@@ -239,10 +265,39 @@ function SubmitForm({ user, onBack, onSuccess }) {
           </div>
         </div>
 
+        {/* MEDIA UPLOAD */}
+        <div className="form-group">
+          <label>Photo / Video <span style={{ color: "#94a3b8", fontWeight: 400 }}>(optional)</span></label>
+          <p className="form-hint">Attach an image or video to show the problem or your suggestion visually.</p>
+
+          {!mediaPreview ? (
+            <label className="media-upload-btn">
+              <input
+                type="file"
+                accept="image/*,video/*"
+                capture="environment"
+                onChange={handleMediaChange}
+                style={{ display: "none" }}
+              />
+              <span className="media-upload-icon">📷</span>
+              <span className="media-upload-text">Take Photo / Record Video / Upload File</span>
+            </label>
+          ) : (
+            <div className="media-preview-wrap">
+              {mediaType === "image" ? (
+                <img src={mediaPreview} alt="Preview" className="media-preview-img" />
+              ) : (
+                <video src={mediaPreview} controls className="media-preview-video" />
+              )}
+              <button type="button" className="media-remove-btn" onClick={removeMedia}>✕ Remove</button>
+            </div>
+          )}
+        </div>
+
         {error && <div className="form-error">{error}</div>}
 
         <button type="submit" className="btn-primary btn-full" disabled={submitting}>
-          {submitting ? "Submitting..." : "Submit Suggestion"}
+          {submitting ? (mediaFile ? "Uploading media..." : "Submitting...") : "Submit Suggestion"}
         </button>
       </form>
     </div>
