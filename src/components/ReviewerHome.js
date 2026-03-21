@@ -13,6 +13,8 @@ const QCDSMT_LABELS = {
   Q: "Quality", C: "Cost", D: "Delivery", S: "Safety", M: "Morale", T: "Technology",
 };
 
+const QCDSMT_ORDER = ["Q", "C", "D", "S", "M", "T"];
+
 const QCDSMT_COLORS = {
   Q: "#2563eb", C: "#059669", D: "#d97706", S: "#dc2626", M: "#7c3aed", T: "#0891b2",
 };
@@ -753,7 +755,7 @@ function ReviewerHome({ user }) {
           <div className="form-group">
             <label>Primary Impact <span className="required">*</span></label>
             <div className="qcdsmt-grid">
-              {qcdsmt.map((q) => (
+              {[...qcdsmt].sort((a, b) => QCDSMT_ORDER.indexOf(a.code) - QCDSMT_ORDER.indexOf(b.code)).map((q) => (
                 <button type="button" key={q.code}
                   className={"qcdsmt-btn" + (primaryImpact === q.code ? " qcdsmt-selected" : "")}
                   onClick={() => setPrimaryImpact(q.code)}
@@ -772,7 +774,7 @@ function ReviewerHome({ user }) {
                 className={"qcdsmt-btn qcdsmt-none" + (secondaryImpact === "" ? " qcdsmt-selected" : "")}
                 onClick={() => setSecondaryImpact("")}
               >None</button>
-              {qcdsmt.filter((q) => q.code !== primaryImpact).map((q) => (
+              {[...qcdsmt].sort((a, b) => QCDSMT_ORDER.indexOf(a.code) - QCDSMT_ORDER.indexOf(b.code)).filter((q) => q.code !== primaryImpact).map((q) => (
                 <button type="button" key={q.code}
                   className={"qcdsmt-btn" + (secondaryImpact === q.code ? " qcdsmt-selected" : "")}
                   onClick={() => setSecondaryImpact(q.code)}
