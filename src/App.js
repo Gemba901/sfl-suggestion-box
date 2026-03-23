@@ -12,13 +12,14 @@ import {
   subscribeToAllStatusChanges,
   unsubscribeAll,
 } from "./services/notifications";
+import client from "./config/client";
 import "./App.css";
 
 function App() {
   const [user, setUser] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [toast, setToast] = useState(null);
-  const [dark, setDark] = useState(localStorage.getItem("sfl_dark") === "true");
+  const [dark, setDark] = useState(localStorage.getItem(`${client.STORAGE_PREFIX}_dark`) === "true");
   const [mgmtMode, setMgmtMode] = useState("dashboard"); // "dashboard" or "review"
 
   // Apply dark mode class to body
@@ -28,7 +29,7 @@ function App() {
     } else {
       document.body.classList.remove("dark-mode");
     }
-    localStorage.setItem("sfl_dark", dark);
+    localStorage.setItem(`${client.STORAGE_PREFIX}_dark`, dark);
   }, [dark]);
 
   // Add a notification to the list + show toast
@@ -71,9 +72,9 @@ function App() {
     <div className="app">
       <header className="app-header">
         <div className="header-left">
-          <img src="/sfl-logo.png" alt="SFL" className="header-logo-img" />
+          <img src={client.LOGO_URL} alt={client.COMPANY_NAME} className="header-logo-img" />
           <div>
-            <div className="header-title">SFL Suggestion Box</div>
+            <div className="header-title">{client.APP_NAME}</div>
             <div className="header-role">{user.role} • {user.name}</div>
           </div>
         </div>

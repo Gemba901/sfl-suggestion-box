@@ -3,6 +3,7 @@
 // IN-APP + BROWSER NOTIFICATIONS via Supabase Realtime
 // ================================================
 import { supabase } from "./supabase";
+import client from "../config/client";
 
 // Request browser notification permission
 export async function requestBrowserPermission() {
@@ -19,7 +20,7 @@ function showBrowserNotification(title, body) {
     try {
       new Notification(title, {
         body: body,
-        icon: "/sfl-logo.png",
+        icon: client.LOGO_URL,
         badge: "/favicon.ico",
       });
     } catch (e) {

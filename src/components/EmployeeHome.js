@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { getSuggestions, getDeptSuggestions } from "../services/data";
 import SubmitForm from "./SubmitForm";
+import client from "../config/client";
 
 const STATUS_COLORS = {
   New: "#94a3b8", "Under Review": "#6366f1", Approved: "#3b82f6",
@@ -300,7 +301,7 @@ function EmployeeHome({ user }) {
             <span className="action-icon">💡</span>
             <span>
               <span className="action-title">Submit Suggestion</span>
-              <span className="action-desc">Share your idea to improve SFL</span>
+              <span className="action-desc">Share your idea to improve {client.COMPANY_NAME}</span>
             </span>
           </button>
 
