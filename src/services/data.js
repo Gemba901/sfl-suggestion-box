@@ -22,14 +22,14 @@ export async function loginUser(name, phone) {
 // Get all active departments (unique)
 export async function getGembas() {
   const { data } = await supabase
-    .from("areas")
+    .from("gemba")
     .select("*")
     .eq("is_active", true)
     .order("department_name");
 
   if (!data) return [];
 
-  // Deduplicate by department_name — areas table has one row per job position
+  // Deduplicate by department_name — gemba table has one row per job position
   const seen = new Set();
   const unique = [];
   data.forEach((row) => {
