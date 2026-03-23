@@ -39,11 +39,11 @@ const client = {
   // Supabase — each client has their own Supabase project
   SUPABASE_URL:
     process.env.REACT_APP_SUPABASE_URL ||
-    "https://guqnbwztmpgzyzemgvjh.supabase.co",
+    "https://cptxjrqedprvpoyclmgu.supabase.co",
 
   SUPABASE_ANON_KEY:
     process.env.REACT_APP_SUPABASE_ANON_KEY ||
-    "sb_publishable__cTdnaq02hEDj9b2PMdfeg_TAXkrqcG",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNwdHhqcnFlZHBydnBveWNsbWd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyMTAxNDEsImV4cCI6MjA4OTc4NjE0MX0.Yah2qVEMV-IxXdfDcp8JTBFEzUNV8NirXhn64wsePRk",
 };
 
 export default client;
