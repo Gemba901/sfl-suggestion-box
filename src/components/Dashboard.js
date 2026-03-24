@@ -117,7 +117,7 @@ function exportToCSV(suggestions) {
 }
 
 // ─── Shared chart props ───────────────────────────────────────────────────────
-function chartProps(theme) {
+function chartProps(theme, isDark) {
   return {
     axis: { tick: { fill: theme.text, fontSize: 11 }, axisLine: { stroke: theme.grid }, tickLine: false },
     grid: { stroke: theme.grid, strokeDasharray: "3 3" },
@@ -187,7 +187,7 @@ function Dashboard({ user }) {
 
   const isDark = useIsDark();
   const theme = useChartTheme(isDark);
-  const cp = chartProps(theme);
+  const cp = chartProps(theme, isDark);
 
   const loadData = useCallback(async () => {
     setLoadError(null);
