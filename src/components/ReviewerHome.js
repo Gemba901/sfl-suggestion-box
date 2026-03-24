@@ -20,6 +20,14 @@ const QCDSMT_COLORS = {
   Q: "#2563eb", C: "#059669", D: "#d97706", S: "#dc2626", M: "#7c3aed", T: "#0891b2",
 };
 
+const STAR_CRITERIA = {
+  1: { label: "Minimal Impact", desc: "Minor convenience improvement with little or no measurable effect on operations." },
+  2: { label: "Small Improvement", desc: "Slight efficiency gain or small cost saving; noticeable but limited scope." },
+  3: { label: "Moderate Impact", desc: "Clear improvement in quality, cost, delivery, or safety within the work area." },
+  4: { label: "Significant Impact", desc: "Measurable reduction in defects, waste, or downtime — tangible benefit to the team." },
+  5: { label: "Transformational", desc: "Major operational improvement with substantial cost savings, safety gains, or process-wide impact." },
+};
+
 function SkeletonCard() {
   return (
     <div className="skeleton-card">
@@ -98,6 +106,7 @@ function ReviewerHome({ user }) {
   const [showRating, setShowRating] = useState(null);
   const [ratingStars, setRatingStars] = useState(0);
   const [ratingComment, setRatingComment] = useState("");
+  const [hoverStar, setHoverStar] = useState(0);
 
   // Confirm dialog state
   const [confirm, setConfirm] = useState(null); // { sug, newStatus, title, body, color }
@@ -332,7 +341,7 @@ function ReviewerHome({ user }) {
                 {s.impactRating > 0 && (
                   <div className="impact-rating-display">
                     <div className="impact-stars">{"★".repeat(s.impactRating)}{"☆".repeat(5 - s.impactRating)}</div>
-                    <div className="impact-label">Impact Rating: {s.impactRating}/5</div>
+                    <div className="impact-label">{STAR_CRITERIA[s.impactRating].label} ({s.impactRating}/5)</div>
                   </div>
                 )}
               </div>
@@ -521,7 +530,7 @@ function ReviewerHome({ user }) {
                 {s.impactRating > 0 && (
                   <div className="impact-rating-display">
                     <div className="impact-stars">{"★".repeat(s.impactRating)}{"☆".repeat(5 - s.impactRating)}</div>
-                    <div className="impact-label">Impact Rating: {s.impactRating}/5</div>
+                    <div className="impact-label">{STAR_CRITERIA[s.impactRating].label} ({s.impactRating}/5)</div>
                     {s.ratingComment && <div className="impact-comment">{s.ratingComment}</div>}
                   </div>
                 )}
@@ -656,17 +665,33 @@ function ReviewerHome({ user }) {
                   <button
                     key={n}
                     type="button"
-                    className={"star-btn" + (ratingStars >= n ? " star-active" : "")}
+                    className={"star-btn" + ((hoverStar || ratingStars) >= n ? " star-active" : "")}
                     onClick={() => setRatingStars(n)}
+                    onMouseEnter={() => setHoverStar(n)}
+                    onMouseLeave={() => setHoverStar(0)}
                   >
                     ★
                   </button>
                 ))}
               </div>
-              <div className="star-labels">
-                <span>Low impact</span>
-                <span>High impact</span>
-              </div>
+              {(hoverStar || ratingStars) > 0 ? (
+                <div className="star-criteria">
+                  <span className="star-criteria-stars">
+                    {"★".repeat(hoverStar || ratingStars)}{"☆".repeat(5 - (hoverStar || ratingStars))}
+                  </span>
+                  <span className="star-criteria-label">
+                    {STAR_CRITERIA[hoverStar || ratingStars].label}
+                  </span>
+                  <span className="star-criteria-desc">
+                    {STAR_CRITERIA[hoverStar || ratingStars].desc}
+                  </span>
+                </div>
+              ) : (
+                <div className="star-labels">
+                  <span>Low impact</span>
+                  <span>High impact</span>
+                </div>
+              )}
 
               <div className="form-group" style={{ marginTop: 12 }}>
                 <label>Comment (optional)</label>

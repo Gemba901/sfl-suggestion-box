@@ -14,6 +14,14 @@ const QCDSMT_LABELS = {
   Q: "Quality", C: "Cost", D: "Delivery", S: "Safety", M: "Morale", T: "Technology",
 };
 
+const STAR_CRITERIA = {
+  1: { label: "Minimal Impact", desc: "Minor convenience improvement with little or no measurable effect on operations." },
+  2: { label: "Small Improvement", desc: "Slight efficiency gain or small cost saving; noticeable but limited scope." },
+  3: { label: "Moderate Impact", desc: "Clear improvement in quality, cost, delivery, or safety within the work area." },
+  4: { label: "Significant Impact", desc: "Measurable reduction in defects, waste, or downtime — tangible benefit to the team." },
+  5: { label: "Transformational", desc: "Major operational improvement with substantial cost savings, safety gains, or process-wide impact." },
+};
+
 const QCDSMT_COLORS = {
   Q: "#2563eb", C: "#059669", D: "#d97706", S: "#dc2626", M: "#7c3aed", T: "#0891b2",
 };
@@ -257,7 +265,7 @@ function EmployeeHome({ user }) {
                     <div className="impact-stars">
                       {"★".repeat(s.impactRating)}{"☆".repeat(5 - s.impactRating)}
                     </div>
-                    <div className="impact-label">Impact Rating: {s.impactRating}/5</div>
+                    <div className="impact-label">{STAR_CRITERIA[s.impactRating].label} ({s.impactRating}/5)</div>
                   </div>
                 )}
               </div>
@@ -451,7 +459,7 @@ function EmployeeHome({ user }) {
                     <div className="impact-stars">
                       {"★".repeat(s.impactRating)}{"☆".repeat(5 - s.impactRating)}
                     </div>
-                    <div className="impact-label">Impact Rating: {s.impactRating}/5</div>
+                    <div className="impact-label">{STAR_CRITERIA[s.impactRating].label} ({s.impactRating}/5)</div>
                     {s.ratingComment && <div className="impact-comment">{s.ratingComment}</div>}
                   </div>
                 )}
