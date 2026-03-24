@@ -676,24 +676,21 @@ function ReviewerHome({ user }) {
                 ))}
               </div>
               <div className="star-criteria">
-                {(hoverStar || ratingStars) > 0 ? (
-                  <>
-                    <span className="star-criteria-stars">
-                      {"★".repeat(hoverStar || ratingStars)}{"☆".repeat(5 - (hoverStar || ratingStars))}
-                    </span>
-                    <span className="star-criteria-label">
-                      {STAR_CRITERIA[hoverStar || ratingStars].label}
-                    </span>
-                    <span className="star-criteria-desc">
-                      {STAR_CRITERIA[hoverStar || ratingStars].desc}
-                    </span>
-                  </>
-                ) : (
-                  <div className="star-labels-inline">
-                    <span>⭐ Low impact</span>
-                    <span>High impact ⭐⭐⭐⭐⭐</span>
-                  </div>
-                )}
+                <span className="star-criteria-stars">
+                  {(hoverStar || ratingStars) > 0
+                    ? "★".repeat(hoverStar || ratingStars) + "☆".repeat(5 - (hoverStar || ratingStars))
+                    : "☆☆☆☆☆"}
+                </span>
+                <span className="star-criteria-label">
+                  {(hoverStar || ratingStars) > 0
+                    ? STAR_CRITERIA[hoverStar || ratingStars].label
+                    : "Hover a star to see criteria"}
+                </span>
+                <span className="star-criteria-desc">
+                  {(hoverStar || ratingStars) > 0
+                    ? STAR_CRITERIA[hoverStar || ratingStars].desc
+                    : "\u00A0"}
+                </span>
               </div>
 
               <div className="form-group" style={{ marginTop: 12 }}>
