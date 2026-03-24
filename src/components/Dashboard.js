@@ -6,7 +6,6 @@ import {
 } from "recharts";
 import { getSuggestions, getQCDSMT } from "../services/data";
 import SubmitForm from "./SubmitForm";
-import client from "../config/client";
 
 const STATUS_COLORS = {
   New: "#94a3b8",
@@ -111,7 +110,7 @@ function exportToCSV(suggestions) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${client.STORAGE_PREFIX}-suggestions-${new Date().toISOString().split("T")[0]}.csv`;
+  a.download = `sfl-suggestions-${new Date().toISOString().split("T")[0]}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -358,7 +357,7 @@ function Dashboard({ user }) {
           <span className="action-icon">💡</span>
           <span>
             <span className="action-title">Submit Suggestion</span>
-            <span className="action-desc">Share your own idea to improve {client.COMPANY_NAME}</span>
+            <span className="action-desc">Share your own idea to improve SFL</span>
           </span>
         </button>
         <button className="action-card action-view" onClick={() => setShowMine(true)}>
