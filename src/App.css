@@ -925,6 +925,7 @@ body {
 }
 .impact-stars { font-size: 22px; color: #f59e0b; letter-spacing: 4px; }
 .impact-label { font-size: 12px; font-weight: 700; color: #92400e; margin-top: 2px; }
+.impact-desc { font-size: 11px; color: #78350f; margin-top: 2px; line-height: 1.4; }
 .impact-comment { font-size: 12px; color: #78350f; margin-top: 4px; font-style: italic; }
 
 /* --- DARK MODE TOGGLE BUTTON --- */
@@ -1100,6 +1101,7 @@ body.dark-mode .impact-rating-display {
   border-color: #92400e;
 }
 body.dark-mode .impact-label { color: #fcd34d; }
+body.dark-mode .impact-desc { color: #fde68a; }
 body.dark-mode .impact-comment { color: #fde68a; }
 
 /* Login page */

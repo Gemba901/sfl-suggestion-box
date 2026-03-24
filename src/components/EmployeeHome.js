@@ -265,6 +265,7 @@ function EmployeeHome({ user }) {
                       {"★".repeat(s.impactRating)}{"☆".repeat(5 - s.impactRating)}
                     </div>
                     <div className="impact-label">{STAR_CRITERIA[s.impactRating].label} ({s.impactRating}/5)</div>
+                    <div className="impact-desc">{STAR_CRITERIA[s.impactRating].desc}</div>
                   </div>
                 )}
               </div>
@@ -459,6 +460,7 @@ function EmployeeHome({ user }) {
                       {"★".repeat(s.impactRating)}{"☆".repeat(5 - s.impactRating)}
                     </div>
                     <div className="impact-label">{STAR_CRITERIA[s.impactRating].label} ({s.impactRating}/5)</div>
+                    <div className="impact-desc">{STAR_CRITERIA[s.impactRating].desc}</div>
                     {s.ratingComment && <div className="impact-comment">{s.ratingComment}</div>}
                   </div>
                 )}
