@@ -1,13 +1,11 @@
 // src/components/SubmitForm.js
 import { useState, useEffect } from "react";
 import { getGembas, getQCDSMT, submitSuggestion, uploadMedia } from "../services/data";
-import client from "../config/client";
-
 const QCDSMT_COLORS = {
   Q: "#2563eb", C: "#059669", D: "#d97706", S: "#dc2626", M: "#7c3aed", T: "#0891b2",
 };
 
-const DRAFT_KEY = (userName) => `${client.STORAGE_PREFIX}_draft_${userName}`;
+const DRAFT_KEY = (userName) => `sfl_draft_${userName}`;
 
 function charCountClass(len, max) {
   const pct = len / max;

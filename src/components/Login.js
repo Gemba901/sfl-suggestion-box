@@ -1,14 +1,13 @@
 // src/components/Login.js
 import { useState } from "react";
 import { loginUser } from "../services/data";
-import client from "../config/client";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 
 function Login({ onLogin }) {
-  const [name, setName] = useState(localStorage.getItem(`${client.STORAGE_PREFIX}_name`) || "");
-  const [phone, setPhone] = useState(localStorage.getItem(`${client.STORAGE_PREFIX}_phone`) || "");
-  const [remember, setRemember] = useState(localStorage.getItem(`${client.STORAGE_PREFIX}_remember`) === "true");
+  const [name, setName] = useState(localStorage.getItem("sfl_name") || "");
+  const [phone, setPhone] = useState(localStorage.getItem("sfl_phone") || "");
+  const [remember, setRemember] = useState(localStorage.getItem("sfl_remember") === "true");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -24,8 +23,8 @@ function Login({ onLogin }) {
       const phoneToUse = phone.startsWith("+") ? phone : `+${phone}`;
 const user = await loginUser(name, phoneToUse);
     if (user) {
-        if (remember) { localStorage.setItem(`${client.STORAGE_PREFIX}_name`, name.trim()); localStorage.setItem(`${client.STORAGE_PREFIX}_phone`, phone); localStorage.setItem(`${client.STORAGE_PREFIX}_remember`, "true"); }
-        else { localStorage.removeItem(`${client.STORAGE_PREFIX}_name`); localStorage.removeItem(`${client.STORAGE_PREFIX}_phone`); localStorage.removeItem(`${client.STORAGE_PREFIX}_remember`); }
+        if (remember) { localStorage.setItem("sfl_name", name.trim()); localStorage.setItem("sfl_phone", phone); localStorage.setItem("sfl_remember", "true"); }
+        else { localStorage.removeItem("sfl_name"); localStorage.removeItem("sfl_phone"); localStorage.removeItem("sfl_remember"); }
         onLogin(user);
       } else {
         setError("Name or phone number not found. Please check and try again.");
@@ -40,9 +39,9 @@ const user = await loginUser(name, phoneToUse);
   return (
     <div className="login-page">
       <div className="login-card">
-        <img src={client.LOGO_URL} alt={client.COMPANY_NAME} className="login-logo-img" />
-        <h1 className="login-title">{client.APP_NAME}</h1>
-        <p className="login-subtitle">{client.APP_TAGLINE}</p>
+        <img src="/sfl-logo.png" alt="SFL" className="login-logo-img" />
+        <h1 className="login-title">SFL Suggestion Box</h1>
+        <p className="login-subtitle">Making SFL better, one idea at a time</p>
 
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
