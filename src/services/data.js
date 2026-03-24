@@ -15,7 +15,10 @@ export async function loginUser(name, phone) {
     .eq("is_active", true)
     .single();
 
-  if (error || !data) return null;
+  if (error || !data) {
+    console.error("LOGIN ERROR:", error, "| cleanPhone:", cleanPhone, "| name:", name.trim());
+    return null;
+  }
   return data;
 }
 
