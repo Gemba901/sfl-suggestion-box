@@ -6,6 +6,7 @@ import {
 } from "recharts";
 import { getSuggestions, getQCDSMT } from "../services/data";
 import SubmitForm from "./SubmitForm";
+import client from "../config/client";
 
 const STATUS_COLORS = {
   New: "#94a3b8",
@@ -110,13 +111,13 @@ function exportToCSV(suggestions) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `sfl-suggestions-${new Date().toISOString().split("T")[0]}.csv`;
+  a.download = `${client.STORAGE_PREFIX}-suggestions-${new Date().toISOString().split("T")[0]}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
 
 // ─── Shared chart props ───────────────────────────────────────────────────────
-function chartProps(theme) {
+function chartProps(theme, isDark) {
   return {
     axis: { tick: { fill: theme.text, fontSize: 11 }, axisLine: { stroke: theme.grid }, tickLine: false },
     grid: { stroke: theme.grid, strokeDasharray: "3 3" },
@@ -186,7 +187,7 @@ function Dashboard({ user }) {
 
   const isDark = useIsDark();
   const theme = useChartTheme(isDark);
-  const cp = chartProps(theme);
+  const cp = chartProps(theme, isDark);
 
   const loadData = useCallback(async () => {
     setLoadError(null);
@@ -357,7 +358,7 @@ function Dashboard({ user }) {
           <span className="action-icon">💡</span>
           <span>
             <span className="action-title">Submit Suggestion</span>
-            <span className="action-desc">Share your own idea to improve SFL</span>
+            <span className="action-desc">Share your own idea to improve {client.COMPANY_NAME}</span>
           </span>
         </button>
         <button className="action-card action-view" onClick={() => setShowMine(true)}>

@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { getSuggestions, getDeptSuggestions } from "../services/data";
 import SubmitForm from "./SubmitForm";
+import client from "../config/client";
 
 const STATUS_COLORS = {
   New: "#94a3b8", "Under Review": "#6366f1", Approved: "#3b82f6",
@@ -11,6 +12,14 @@ const STATUS_COLORS = {
 
 const QCDSMT_LABELS = {
   Q: "Quality", C: "Cost", D: "Delivery", S: "Safety", M: "Morale", T: "Technology",
+};
+
+const STAR_CRITERIA = {
+  1: { label: "Minimal Impact", desc: "Minor convenience improvement with little or no measurable effect on operations." },
+  2: { label: "Small Improvement", desc: "Slight efficiency gain or small cost saving; noticeable but limited scope." },
+  3: { label: "Moderate Impact", desc: "Clear improvement in quality, cost, delivery, or safety within the work area." },
+  4: { label: "Significant Impact", desc: "Measurable reduction in defects, waste, or downtime — tangible benefit to the team." },
+  5: { label: "Transformational", desc: "Major operational improvement with substantial cost savings, safety gains, or process-wide impact." },
 };
 
 const QCDSMT_COLORS = {
@@ -256,7 +265,7 @@ function EmployeeHome({ user }) {
                     <div className="impact-stars">
                       {"★".repeat(s.impactRating)}{"☆".repeat(5 - s.impactRating)}
                     </div>
-                    <div className="impact-label">Impact Rating: {s.impactRating}/5</div>
+                    <div className="impact-label">{STAR_CRITERIA[s.impactRating].label} ({s.impactRating}/5)</div>
                   </div>
                 )}
               </div>
@@ -300,7 +309,7 @@ function EmployeeHome({ user }) {
             <span className="action-icon">💡</span>
             <span>
               <span className="action-title">Submit Suggestion</span>
-              <span className="action-desc">Share your idea to improve SFL</span>
+              <span className="action-desc">Share your idea to improve {client.COMPANY_NAME}</span>
             </span>
           </button>
 
@@ -450,7 +459,7 @@ function EmployeeHome({ user }) {
                     <div className="impact-stars">
                       {"★".repeat(s.impactRating)}{"☆".repeat(5 - s.impactRating)}
                     </div>
-                    <div className="impact-label">Impact Rating: {s.impactRating}/5</div>
+                    <div className="impact-label">{STAR_CRITERIA[s.impactRating].label} ({s.impactRating}/5)</div>
                     {s.ratingComment && <div className="impact-comment">{s.ratingComment}</div>}
                   </div>
                 )}
