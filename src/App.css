@@ -890,16 +890,20 @@ body {
 .star-row { display: flex; justify-content: center; gap: 8px; margin: 16px 0 4px; }
 .star-btn {
   font-size: 36px; background: none; border: none; cursor: pointer;
-  color: #e2e8f0; transition: color 0.15s, transform 0.15s; padding: 0; line-height: 1;
+  color: #cbd5e1; transition: color 0.15s, transform 0.1s; padding: 4px 2px; line-height: 1;
 }
-.star-btn:hover { transform: scale(1.15); }
+.star-btn:hover { transform: scale(1.2); color: #f59e0b; }
 .star-active { color: #f59e0b; }
-.star-labels { display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; margin-bottom: 8px; }
+.star-labels-inline {
+  display: flex; justify-content: space-between; width: 100%;
+  font-size: 11px; color: #94a3b8;
+}
 
 .star-criteria {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 2px;
   margin-bottom: 12px;
   padding: 10px 14px;
@@ -907,10 +911,11 @@ body {
   border: 1px solid #fde68a;
   border-radius: 10px;
   text-align: center;
-  min-height: 64px;
+  height: 96px;
+  overflow: hidden;
 }
 .star-criteria-stars { font-size: 18px; color: #f59e0b; letter-spacing: 3px; line-height: 1; }
-.star-criteria-label { font-size: 13px; font-weight: 700; color: #92400e; margin-top: 2px; }
+.star-criteria-label { font-size: 13px; font-weight: 700; color: #92400e; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .star-criteria-desc { font-size: 12px; color: #78350f; line-height: 1.4; }
 
 /* --- IMPACT RATING ON CARDS --- */
@@ -921,6 +926,7 @@ body {
 }
 .impact-stars { font-size: 22px; color: #f59e0b; letter-spacing: 4px; }
 .impact-label { font-size: 12px; font-weight: 700; color: #92400e; margin-top: 2px; }
+.impact-desc { font-size: 11px; color: #78350f; margin-top: 2px; line-height: 1.4; }
 .impact-comment { font-size: 12px; color: #78350f; margin-top: 4px; font-style: italic; }
 
 /* --- DARK MODE TOGGLE BUTTON --- */
@@ -1078,10 +1084,13 @@ body.dark-mode .rating-modal {
 body.dark-mode .rating-modal-title { color: #f1f5f9; }
 body.dark-mode .rating-modal-sub { color: #94a3b8; }
 body.dark-mode .rating-info { color: #cbd5e1; }
-body.dark-mode .star-btn { color: #475569; }
+body.dark-mode .star-btn { color: #64748b; }
+body.dark-mode .star-btn:hover { color: #f59e0b; }
+body.dark-mode .star-btn.star-active { color: #fbbf24; }
+body.dark-mode .star-labels-inline { color: #64748b; }
 body.dark-mode .star-criteria {
   background: linear-gradient(135deg, #451a03, #78350f);
-  border-color: #92400e;
+  border: 1px solid #92400e;
 }
 body.dark-mode .star-criteria-stars { color: #fbbf24; }
 body.dark-mode .star-criteria-label { color: #fcd34d; }
@@ -1093,6 +1102,7 @@ body.dark-mode .impact-rating-display {
   border-color: #92400e;
 }
 body.dark-mode .impact-label { color: #fcd34d; }
+body.dark-mode .impact-desc { color: #fde68a; }
 body.dark-mode .impact-comment { color: #fde68a; }
 
 /* Login page */
