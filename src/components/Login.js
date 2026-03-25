@@ -5,9 +5,10 @@ import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 
 function Login({ onLogin }) {
-  const [name, setName] = useState(localStorage.getItem("sfl_name") || "");
-  const [phone, setPhone] = useState(localStorage.getItem("sfl_phone") || "");
-  const [remember, setRemember] = useState(localStorage.getItem("sfl_remember") === "true");
+  const CLIENT = process.env.REACT_APP_CLIENT_KEY || "app";
+  const [name, setName] = useState(localStorage.getItem(`${CLIENT}_name`) || "");
+  const [phone, setPhone] = useState(localStorage.getItem(`${CLIENT}_phone`) || "");
+  const [remember, setRemember] = useState(localStorage.getItem(`${CLIENT}_remember`) === "true");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -23,8 +24,8 @@ function Login({ onLogin }) {
       const phoneToUse = phone.startsWith("+") ? phone : `+${phone}`;
 const user = await loginUser(name, phoneToUse);
     if (user) {
-        if (remember) { localStorage.setItem("sfl_name", name.trim()); localStorage.setItem("sfl_phone", phone); localStorage.setItem("sfl_remember", "true"); }
-        else { localStorage.removeItem("sfl_name"); localStorage.removeItem("sfl_phone"); localStorage.removeItem("sfl_remember"); }
+        if (remember) { localStorage.setItem(`${CLIENT}_name`, name.trim()); localStorage.setItem(`${CLIENT}_phone`, phone); localStorage.setItem(`${CLIENT}_remember`, "true"); }
+        else { localStorage.removeItem(`${CLIENT}_name`); localStorage.removeItem(`${CLIENT}_phone`); localStorage.removeItem(`${CLIENT}_remember`); }
         onLogin(user);
       } else {
         setError("Name or phone number not found. Please check and try again.");
@@ -39,9 +40,9 @@ const user = await loginUser(name, phoneToUse);
   return (
     <div className="login-page">
       <div className="login-card">
-        <img src="/sfl-logo.png" alt="SFL" className="login-logo-img" />
-        <h1 className="login-title">SFL Suggestion Box</h1>
-        <p className="login-subtitle">Making SFL better, one idea at a time</p>
+        <img src={process.env.REACT_APP_LOGO_URL || "/sfl-logo.png"} alt={process.env.REACT_APP_CLIENT_NAME || "SFL"} className="login-logo-img" />
+        <h1 className="login-title">{process.env.REACT_APP_CLIENT_NAME || "SFL"} Suggestion Box</h1>
+        <p className="login-subtitle">Making {process.env.REACT_APP_CLIENT_NAME || "SFL"} better, one idea at a time</p>
 
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
