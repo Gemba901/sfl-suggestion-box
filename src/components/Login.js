@@ -21,8 +21,7 @@ function Login({ onLogin }) {
 
     setLoading(true);
     try {
-      const phoneToUse = phone.startsWith("+") ? phone : `+${phone}`;
-const user = await loginUser(name, phoneToUse);
+      const user = await loginUser(name, phone);
     if (user) {
         if (remember) { localStorage.setItem(`${CLIENT}_name`, name.trim()); localStorage.setItem(`${CLIENT}_phone`, phone); localStorage.setItem(`${CLIENT}_remember`, "true"); }
         else { localStorage.removeItem(`${CLIENT}_name`); localStorage.removeItem(`${CLIENT}_phone`); localStorage.removeItem(`${CLIENT}_remember`); }

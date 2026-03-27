@@ -5,8 +5,17 @@
 import { supabase } from "./supabase";
 
 // Login: find employee by name + phone
+function normalizePhone(raw) {
+  const digits = raw.replace(/\D/g, ""); // strip everything except digits
+  if (digits.length === 9) return "254" + digits;           // 780502502  → 254780502502
+  if (digits.length === 10 && digits.startsWith("0")) return "254" + digits.slice(1); // 0780502502 → 254780502502
+  if (digits.length === 12 && digits.startsWith("254")) return digits; // already correct
+  if (digits.length === 13 && digits.startsWith("2540")) return "254" + digits.slice(4); // 2540780502502 → 254780502502
+  return digits; // fallback: use as-is
+}
+
 export async function loginUser(name, phone) {
-  const cleanPhone = phone.replace(/\s/g, "").replace(/^\+/, "");
+  const cleanPhone = normalizePhone(phone);
   const { data, error } = await supabase
     .from("employees")
     .select("*")
