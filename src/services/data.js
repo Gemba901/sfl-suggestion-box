@@ -160,7 +160,12 @@ export async function getNextId() {
 }
 
 // Upload a media file (image or video) to Supabase Storage
+const ALLOWED_MIME_TYPES = ["image/jpeg","image/png","image/webp","image/gif","video/mp4","video/webm","video/quicktime"];
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+
 export async function uploadMedia(file) {
+  if (file.size > MAX_FILE_SIZE) throw new Error("File too large. Maximum size is 50MB.");
+  if (!ALLOWED_MIME_TYPES.includes(file.type)) throw new Error("File type not allowed. Use images (JPEG, PNG, WebP, GIF) or videos (MP4, WebM, MOV).");
   const ext = file.name.split(".").pop();
   const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
   const { data, error } = await supabase.storage
