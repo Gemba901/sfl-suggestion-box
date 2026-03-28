@@ -53,7 +53,7 @@ function App() {
     } else {
       subscribeToStatusChanges(user.name, addNotification);
     }
-    return () => { unsubscribeAll(); };
+    return () => { unsubscribeAll(); }; // async — fire and forget on cleanup
   }, [user, addNotification]);
 
   function handleLogout() {
