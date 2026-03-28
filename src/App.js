@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import Login from "./components/Login";
 import EmployeeHome from "./components/EmployeeHome";
 import ReviewerHome from "./components/ReviewerHome";
+import HODHome from "./components/HODHome";
 import Dashboard from "./components/Dashboard";
 import NotificationBell, { NotificationToast } from "./components/NotificationBell";
 import {
@@ -46,7 +47,7 @@ function App() {
   useEffect(() => {
     if (!user) return;
     requestBrowserPermission();
-    if (user.role === "Reviewer" || user.role === "Management" || user.role === "HOD") {
+    if (user.role === "Reviewer" || user.role === "Management" || user.role === "HOD" || user.role === "HOD/Reviewer") {
       subscribeToNewSuggestions(addNotification);
       subscribeToAllStatusChanges(user.name, addNotification);
     } else {
@@ -94,7 +95,8 @@ function App() {
 
       <div className="app-content">
         {user.role === "Employee" && <EmployeeHome user={user} />}
-        {(user.role === "Reviewer" || user.role === "HOD") && <ReviewerHome user={user} />}
+        {user.role === "HOD" && <HODHome user={user} />}
+        {(user.role === "Reviewer" || user.role === "HOD/Reviewer") && <ReviewerHome user={user} />}
         {user.role === "Management" && (
           <>
             {/* Toggle between Dashboard and Review mode */}

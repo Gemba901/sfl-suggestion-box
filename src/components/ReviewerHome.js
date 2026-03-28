@@ -365,12 +365,12 @@ function ReviewerHome({ user }) {
     return (
       <div className="page">
         <div className="welcome-card welcome-reviewer">
-          <div className="welcome-emoji">{user.role === "HOD" ? "🏢" : "📊"}</div>
+          <div className="welcome-emoji">{user.role === "HOD/Reviewer" ? "🏢" : "📊"}</div>
           <h2>Welcome {user.name.split(" ")[0]}!</h2>
-          <p className="text-muted">{user.role === "HOD" ? `Head of Department — ${user.department || "your dept"}` : "Here's what needs your attention"}</p>
+          <p className="text-muted">{user.role === "HOD/Reviewer" ? `Head of Department — ${user.department || "your dept"}` : "Here's what needs your attention"}</p>
         </div>
 
-        {user.role === "HOD" ? (
+        {user.role === "HOD/Reviewer" ? (
           <>
             <h3 style={{ margin: "4px 0 10px", fontSize: 15, fontWeight: 700, color: "#475569" }}>🏢 {user.department} — Summary</h3>
             <div className="kpi-grid">

@@ -90,7 +90,7 @@ export async function getSuggestions(user) {
 
   if (user.role === "Employee") {
     query = query.eq("employee_name", user.name);
-  } else if (user.role === "HOD") {
+  } else if (user.role === "HOD" || user.role === "HOD/Reviewer") {
     query = query.eq("area", user.department);
   }
 
@@ -209,6 +209,19 @@ export async function submitSuggestion(user, gemba, problem, suggestion, employe
     return null;
   }
   return data;
+}
+
+// HOD assign owner + due date only (no status change, no approve/reject)
+export async function assignSuggestionOwner(suggestionId, { assignedOwner, dueDate, comment }) {
+  const { error } = await supabase
+    .from("suggestions")
+    .update({
+      assigned_owner: assignedOwner,
+      due_date: dueDate || null,
+      reviewer_comment: comment || "",
+    })
+    .eq("suggestion_id", suggestionId);
+  if (error) throw error;
 }
 
 // Review a suggestion (Reviewer)
