@@ -941,6 +941,7 @@ body {
   transition: all 0.15s;
 }
 .btn-dark-toggle:hover { background: #f8fafc; }
+.btn-dark-toggle.spinning { animation: spin 0.7s linear infinite; }
 
 /* --- RATING TOAST COLOR --- */
 .notif-toast-rating {

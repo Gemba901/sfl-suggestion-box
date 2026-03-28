@@ -172,7 +172,7 @@ function SuggestionCard({ s }) {
 }
 
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
-function Dashboard({ user }) {
+function Dashboard({ user, refreshKey }) {
   const [tab, setTab] = useState("overview");
   const [showSubmit, setShowSubmit] = useState(false);
   const [showMine, setShowMine] = useState(false);
@@ -180,7 +180,6 @@ function Dashboard({ user }) {
   const [qcdsmt, setQcdsmt] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
-  const [refreshing, setRefreshing] = useState(false);
   const [allSearch, setAllSearch] = useState("");
   const [allStatusFilter, setAllStatusFilter] = useState("All");
 
@@ -198,16 +197,10 @@ function Dashboard({ user }) {
       setLoadError("Failed to load dashboard data. Please check your connection.");
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
-  }, [user]);
+  }, [user, refreshKey]);
 
   useEffect(() => { loadData(); }, [loadData]);
-
-  async function handleRefresh() {
-    setRefreshing(true);
-    await loadData();
-  }
 
   if (loading) {
     return (
@@ -389,9 +382,8 @@ function Dashboard({ user }) {
       {/* ══════════════ OVERVIEW ══════════════ */}
       {tab === "overview" && (
         <div className="chart-section">
-          <div style={{ display:"flex", justifyContent:"flex-end", marginBottom:8, gap:8 }}>
+          <div style={{ display:"flex", justifyContent:"flex-end", marginBottom:8 }}>
             <button className="btn-export" onClick={() => exportToCSV(allSuggestions)}>⬇ Export CSV</button>
-            <button className={"btn-refresh"+(refreshing?" spinning":"")} onClick={handleRefresh} title="Refresh">🔄</button>
           </div>
 
           {/* Monthly trend */}

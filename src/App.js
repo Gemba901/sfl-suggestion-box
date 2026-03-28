@@ -21,6 +21,8 @@ function App() {
   const [toast, setToast] = useState(null);
   const [dark, setDark] = useState(localStorage.getItem("sfl_dark") === "true");
   const [mgmtMode, setMgmtMode] = useState("dashboard"); // "dashboard" or "review"
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Apply dark mode class to body
   useEffect(() => {
@@ -56,6 +58,12 @@ function App() {
     return () => { unsubscribeAll(); }; // async — fire and forget on cleanup
   }, [user, addNotification]);
 
+  function handleGlobalRefresh() {
+    setRefreshing(true);
+    setRefreshKey((k) => k + 1);
+    setTimeout(() => setRefreshing(false), 1000);
+  }
+
   function handleLogout() {
     unsubscribeAll();
     setNotifications([]);
@@ -79,6 +87,7 @@ function App() {
           </div>
         </div>
         <div className="header-right">
+          <button className={"btn-dark-toggle" + (refreshing ? " spinning" : "")} onClick={handleGlobalRefresh} title="Refresh">🔄</button>
           <button className="btn-dark-toggle" onClick={() => setDark(!dark)} title={dark ? "Light mode" : "Dark mode"}>
             {dark ? "☀️" : "🌙"}
           </button>
@@ -94,9 +103,9 @@ function App() {
       <NotificationToast notification={toast} onDismiss={() => setToast(null)} />
 
       <div className="app-content">
-        {user.role === "Employee" && <EmployeeHome user={user} />}
-        {user.role === "HOD" && <HODHome user={user} />}
-        {(user.role === "Reviewer" || user.role === "HOD/Reviewer") && <ReviewerHome user={user} />}
+        {user.role === "Employee" && <EmployeeHome user={user} refreshKey={refreshKey} />}
+        {user.role === "HOD" && <HODHome user={user} refreshKey={refreshKey} />}
+        {(user.role === "Reviewer" || user.role === "HOD/Reviewer") && <ReviewerHome user={user} refreshKey={refreshKey} />}
         {user.role === "Management" && (
           <>
             {/* Toggle between Dashboard and Review mode */}
@@ -117,8 +126,8 @@ function App() {
               </div>
             </div>
 
-            {mgmtMode === "dashboard" && <Dashboard user={user} />}
-            {mgmtMode === "review" && <ReviewerHome user={user} />}
+            {mgmtMode === "dashboard" && <Dashboard user={user} refreshKey={refreshKey} />}
+            {mgmtMode === "review" && <ReviewerHome user={user} refreshKey={refreshKey} />}
           </>
         )}
       </div>

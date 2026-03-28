@@ -82,7 +82,7 @@ function ConfirmModal({ title, body, confirmLabel, confirmColor = "#6366f1", onC
   );
 }
 
-function ReviewerHome({ user }) {
+function ReviewerHome({ user, refreshKey }) {
   const [view, setView] = useState("home");
   const [selectedSuggestion, setSelectedSuggestion] = useState(null);
   const [decision, setDecision] = useState("");
@@ -101,7 +101,6 @@ function ReviewerHome({ user }) {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   const [showRating, setShowRating] = useState(null);
   const [ratingStars, setRatingStars] = useState(0);
   const [ratingComment, setRatingComment] = useState("");
@@ -131,18 +130,12 @@ function ReviewerHome({ user }) {
       setLoadError("Failed to load data. Please check your connection.");
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
-  }, [user]);
+  }, [user, refreshKey]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
-
-  async function handleRefresh() {
-    setRefreshing(true);
-    await loadData();
-  }
 
   const today = new Date().toISOString().split("T")[0];
   const newCount = allSuggestions.filter((s) => s.status === "New").length;
@@ -307,7 +300,6 @@ function ReviewerHome({ user }) {
         <button className="btn-back" onClick={() => setView("home")}>← Back</button>
         <div className="page-title-row">
           <h2 className="page-title">📊 {dept} — Department</h2>
-          <button className={"btn-refresh" + (refreshing ? " spinning" : "")} onClick={handleRefresh} title="Refresh">🔄</button>
         </div>
 
         <div className="kpi-grid">
@@ -448,7 +440,6 @@ function ReviewerHome({ user }) {
         <button className="btn-back" onClick={() => setView("home")}>← Back</button>
         <div className="page-title-row">
           <h2 className="page-title">📥 Review Queue ({queue.length})</h2>
-          <button className={"btn-refresh" + (refreshing ? " spinning" : "")} onClick={handleRefresh} title="Refresh">🔄</button>
         </div>
 
         {queue.length > 0 && (
@@ -523,7 +514,6 @@ function ReviewerHome({ user }) {
         <button className="btn-back" onClick={() => setView("home")}>← Back</button>
         <div className="page-title-row">
           <h2 className="page-title">📋 My Suggestions ({mine.length})</h2>
-          <button className={"btn-refresh" + (refreshing ? " spinning" : "")} onClick={handleRefresh} title="Refresh">🔄</button>
         </div>
         {mine.length === 0 ? (
           <div className="empty-state">
@@ -577,7 +567,6 @@ function ReviewerHome({ user }) {
         <button className="btn-back" onClick={() => setView("home")}>← Back</button>
         <div className="page-title-row">
           <h2 className="page-title">⏳ In Progress ({progressItems.length})</h2>
-          <button className={"btn-refresh" + (refreshing ? " spinning" : "")} onClick={handleRefresh} title="Refresh">🔄</button>
         </div>
 
         {progressItems.length > 0 && (

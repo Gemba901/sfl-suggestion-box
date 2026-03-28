@@ -58,13 +58,12 @@ function ExpandableText({ text, label, maxLen = 160 }) {
   );
 }
 
-function EmployeeHome({ user }) {
+function EmployeeHome({ user, refreshKey }) {
   const [view, setView] = useState("home");
   const [mySuggestions, setMySuggestions] = useState([]);
   const [deptSuggestions, setDeptSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [refreshing, setRefreshing] = useState(false);
 
   // Search + filter states
   const [search, setSearch] = useState("");
@@ -83,18 +82,12 @@ function EmployeeHome({ user }) {
       setError("Failed to load suggestions. Please check your connection.");
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
-  }, [user]);
+  }, [user, refreshKey]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
-
-  async function handleRefresh() {
-    setRefreshing(true);
-    await loadData();
-  }
 
   // Apply search + status filter
   function filterSuggestions(list) {
@@ -171,11 +164,6 @@ function EmployeeHome({ user }) {
         <button className="btn-back" onClick={() => setView("home")}>← Back</button>
         <div className="page-title-row">
           <h2 className="page-title">📊 {dept} — Department</h2>
-          <button
-            className={"btn-refresh" + (refreshing ? " spinning" : "")}
-            onClick={handleRefresh}
-            title="Refresh"
-          >🔄</button>
         </div>
 
         <div className="kpi-grid">
@@ -341,11 +329,6 @@ function EmployeeHome({ user }) {
       <button className="btn-back" onClick={() => setView("home")}>← Back</button>
       <div className="page-title-row">
         <h2 className="page-title">📋 My Suggestions ({mySuggestions.length})</h2>
-        <button
-          className={"btn-refresh" + (refreshing ? " spinning" : "")}
-          onClick={handleRefresh}
-          title="Refresh"
-        >🔄</button>
       </div>
 
       {/* Search + filter */}

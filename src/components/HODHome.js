@@ -45,13 +45,12 @@ function ExpandableText({ text, label, maxLen = 160 }) {
   );
 }
 
-function HODHome({ user }) {
+function HODHome({ user, refreshKey }) {
   const [view, setView] = useState("home");
   const [suggestions, setSuggestions] = useState([]);
   const [owners, setOwners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
-  const [refreshing, setRefreshing] = useState(false);
 
   // Assign modal state
   const [assignTarget, setAssignTarget] = useState(null);
@@ -76,13 +75,10 @@ function HODHome({ user }) {
       setLoadError("Failed to load data. Please check your connection.");
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
-  }, [user]);
+  }, [user, refreshKey]);
 
   useEffect(() => { loadData(); }, [loadData]);
-
-  async function handleRefresh() { setRefreshing(true); await loadData(); }
 
   // KPI computations
   const dept = user.department || "Your Department";
@@ -162,7 +158,6 @@ function HODHome({ user }) {
         <button className="btn-back" onClick={() => setView("home")}>← Back</button>
         <div className="page-title-row">
           <h2 className="page-title">⏳ In Progress ({inProgress.length})</h2>
-          <button className={"btn-refresh" + (refreshing ? " spinning" : "")} onClick={handleRefresh} title="Refresh">🔄</button>
         </div>
         {inProgress.length === 0 ? (
           <div className="empty-state"><div className="empty-icon">✅</div><p>No items currently in progress.</p></div>
@@ -239,7 +234,6 @@ function HODHome({ user }) {
         <button className="btn-back" onClick={() => setView("home")}>← Back</button>
         <div className="page-title-row">
           <h2 className="page-title">📋 All in {dept} ({suggestions.length})</h2>
-          <button className={"btn-refresh" + (refreshing ? " spinning" : "")} onClick={handleRefresh} title="Refresh">🔄</button>
         </div>
         {suggestions.length === 0 ? (
           <div className="empty-state"><div className="empty-icon">📭</div><p>No suggestions in {dept} yet.</p></div>
