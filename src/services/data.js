@@ -229,6 +229,7 @@ export async function reviewSuggestion(suggestionId, updates) {
   let newStatus = "Under Review";
   if (updates.reviewDecision === "Approve") newStatus = "Approved";
   if (updates.reviewDecision === "Need Clarification") newStatus = "Need Clarification";
+  if (updates.reviewDecision === "On Hold") newStatus = "On Hold";
   if (updates.reviewDecision === "Reject") newStatus = "Rejected";
 
   const { error } = await supabase

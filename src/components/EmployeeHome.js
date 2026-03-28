@@ -5,7 +5,7 @@ import SubmitForm from "./SubmitForm";
 
 const STATUS_COLORS = {
   New: "#94a3b8", "Under Review": "#6366f1", Approved: "#3b82f6",
-  "Need Clarification": "#f59e0b", Rejected: "#ef4444",
+  "Need Clarification": "#f59e0b", Rejected: "#ef4444", "On Hold": "#64748b",
   Implementing: "#8b5cf6", Implemented: "#10b981", Closed: "#374151",
 };
 
@@ -25,7 +25,7 @@ const QCDSMT_COLORS = {
   Q: "#2563eb", C: "#059669", D: "#d97706", S: "#dc2626", M: "#7c3aed", T: "#0891b2",
 };
 
-const ALL_STATUSES = ["New", "Under Review", "Approved", "Need Clarification", "Rejected", "Implementing", "Implemented", "Closed"];
+const ALL_STATUSES = ["New", "Under Review", "Approved", "Need Clarification", "On Hold", "Rejected", "Implementing", "Implemented", "Closed"];
 
 function SkeletonCard() {
   return (
