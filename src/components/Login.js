@@ -8,6 +8,7 @@ function Login({ onLogin }) {
   const CLIENT = process.env.REACT_APP_CLIENT_KEY || "app";
   const [name, setName] = useState(localStorage.getItem(`${CLIENT}_name`) || "");
   const [phone, setPhone] = useState(localStorage.getItem(`${CLIENT}_phone`) || "");
+  const [dialCode, setDialCode] = useState("254");
   const [remember, setRemember] = useState(localStorage.getItem(`${CLIENT}_remember`) === "true");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,8 +22,7 @@ function Login({ onLogin }) {
 
     setLoading(true);
     try {
-      const phoneToUse = phone.startsWith("+") ? phone : `+${phone}`;
-const user = await loginUser(name, phoneToUse);
+      const user = await loginUser(name, phone, dialCode);
     if (user) {
         if (remember) { localStorage.setItem(`${CLIENT}_name`, name.trim()); localStorage.setItem(`${CLIENT}_phone`, phone); localStorage.setItem(`${CLIENT}_remember`, "true"); }
         else { localStorage.removeItem(`${CLIENT}_name`); localStorage.removeItem(`${CLIENT}_phone`); localStorage.removeItem(`${CLIENT}_remember`); }
@@ -62,7 +62,7 @@ const user = await loginUser(name, phoneToUse);
   <PhoneInput
   country={"ke"}
   value={phone}
-  onChange={(value) => setPhone(value)}
+  onChange={(value, countryData) => { setPhone(value); setDialCode(countryData.dialCode); }}
   enableSearch
   countryCodeEditable={true}
   inputStyle={{ width: "100%" }}

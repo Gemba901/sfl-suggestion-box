@@ -5,8 +5,15 @@
 import { supabase } from "./supabase";
 
 // Login: find employee by name + phone
-export async function loginUser(name, phone) {
-  const cleanPhone = phone.replace(/\s/g, "").replace(/^\+/, "");
+function normalizePhone(raw, dialCode = "254") {
+  const digits = raw.replace(/\D/g, "");
+  if (digits.startsWith(dialCode)) return digits;            // already has country code
+  if (digits.startsWith("0")) return dialCode + digits.slice(1); // local format with leading 0
+  return dialCode + digits;                                  // bare local number
+}
+
+export async function loginUser(name, phone, dialCode = "254") {
+  const cleanPhone = normalizePhone(phone, dialCode);
   const { data, error } = await supabase
     .from("employees")
     .select("*")
@@ -83,6 +90,8 @@ export async function getSuggestions(user) {
 
   if (user.role === "Employee") {
     query = query.eq("employee_name", user.name);
+  } else if (user.role === "HOD" || user.role === "HOD/Reviewer") {
+    query = query.eq("area", user.department);
   }
 
   const { data } = await query;
@@ -202,11 +211,25 @@ export async function submitSuggestion(user, gemba, problem, suggestion, employe
   return data;
 }
 
+// HOD assign owner + due date only (no status change, no approve/reject)
+export async function assignSuggestionOwner(suggestionId, { assignedOwner, dueDate, comment }) {
+  const { error } = await supabase
+    .from("suggestions")
+    .update({
+      assigned_owner: assignedOwner,
+      due_date: dueDate || null,
+      reviewer_comment: comment || "",
+    })
+    .eq("suggestion_id", suggestionId);
+  if (error) throw error;
+}
+
 // Review a suggestion (Reviewer)
 export async function reviewSuggestion(suggestionId, updates) {
   let newStatus = "Under Review";
   if (updates.reviewDecision === "Approve") newStatus = "Approved";
   if (updates.reviewDecision === "Need Clarification") newStatus = "Need Clarification";
+  if (updates.reviewDecision === "On Hold") newStatus = "On Hold";
   if (updates.reviewDecision === "Reject") newStatus = "Rejected";
 
   const { error } = await supabase
