@@ -90,6 +90,8 @@ export async function getSuggestions(user) {
 
   if (user.role === "Employee") {
     query = query.eq("employee_name", user.name);
+  } else if (user.role === "HOD") {
+    query = query.eq("area", user.department);
   }
 
   const { data } = await query;

@@ -354,20 +354,42 @@ function ReviewerHome({ user }) {
 
   // --- HOME ---
   if (view === "home") {
+    // HOD dept KPIs — computed from allSuggestions which is already dept-filtered
+    const hodPending = allSuggestions.filter((s) => ["New", "Under Review"].includes(s.status)).length;
+    const hodApproved = allSuggestions.filter((s) => ["Approved", "Implementing", "Implemented", "Closed"].includes(s.status)).length;
+    const hodDone = allSuggestions.filter((s) => ["Implemented", "Closed"].includes(s.status)).length;
+    const hodRated = allSuggestions.filter((s) => s.impactRating > 0);
+    const hodAvgRating = hodRated.length > 0 ? (hodRated.reduce((sum, s) => sum + s.impactRating, 0) / hodRated.length).toFixed(1) : "—";
+    const hodOverdue = allSuggestions.filter((s) => s.dueDate && s.dueDate < today && !["Closed", "Implemented", "Rejected"].includes(s.status)).length;
+
     return (
       <div className="page">
         <div className="welcome-card welcome-reviewer">
-          <div className="welcome-emoji">📊</div>
+          <div className="welcome-emoji">{user.role === "HOD" ? "🏢" : "📊"}</div>
           <h2>Welcome {user.name.split(" ")[0]}!</h2>
-          <p className="text-muted">Here's what needs your attention</p>
+          <p className="text-muted">{user.role === "HOD" ? `Head of Department — ${user.department || "your dept"}` : "Here's what needs your attention"}</p>
         </div>
 
-        <div className="stats-row">
-          <div className="stat-card"><div className="stat-value">{allSuggestions.length}</div><div className="stat-label">Total</div></div>
-          <div className="stat-card"><div className="stat-value" style={{ color: "#f59e0b" }}>{newCount}</div><div className="stat-label">New</div></div>
-          <div className="stat-card"><div className="stat-value" style={{ color: "#8b5cf6" }}>{inProgress.length}</div><div className="stat-label">In Progress</div></div>
-          <div className="stat-card"><div className="stat-value" style={{ color: overdueCount > 0 ? "#ef4444" : "#10b981" }}>{overdueCount}</div><div className="stat-label">Overdue</div></div>
-        </div>
+        {user.role === "HOD" ? (
+          <>
+            <h3 style={{ margin: "4px 0 10px", fontSize: 15, fontWeight: 700, color: "#475569" }}>🏢 {user.department} — Summary</h3>
+            <div className="kpi-grid">
+              <div className="kpi-card"><div className="kpi-icon">📋</div><div className="kpi-value" style={{ color: "#3b82f6" }}>{allSuggestions.length}</div><div className="kpi-label">Total</div></div>
+              <div className="kpi-card"><div className="kpi-icon">📥</div><div className="kpi-value" style={{ color: "#f59e0b" }}>{hodPending}</div><div className="kpi-label">Pending</div></div>
+              <div className="kpi-card"><div className="kpi-icon">✅</div><div className="kpi-value" style={{ color: "#10b981" }}>{hodApproved}</div><div className="kpi-label">Approved</div></div>
+              <div className="kpi-card"><div className="kpi-icon">🎯</div><div className="kpi-value" style={{ color: "#6366f1" }}>{hodDone}</div><div className="kpi-label">Done</div></div>
+              <div className="kpi-card"><div className="kpi-icon">⭐</div><div className="kpi-value" style={{ color: "#d97706" }}>{hodAvgRating}</div><div className="kpi-label">Avg Rating</div></div>
+              <div className={"kpi-card" + (hodOverdue > 0 ? " kpi-alert" : "")}><div className="kpi-icon">⏰</div><div className="kpi-value" style={{ color: hodOverdue > 0 ? "#ef4444" : "#10b981" }}>{hodOverdue}</div><div className="kpi-label">Overdue</div></div>
+            </div>
+          </>
+        ) : (
+          <div className="stats-row">
+            <div className="stat-card"><div className="stat-value">{allSuggestions.length}</div><div className="stat-label">Total</div></div>
+            <div className="stat-card"><div className="stat-value" style={{ color: "#f59e0b" }}>{newCount}</div><div className="stat-label">New</div></div>
+            <div className="stat-card"><div className="stat-value" style={{ color: "#8b5cf6" }}>{inProgress.length}</div><div className="stat-label">In Progress</div></div>
+            <div className="stat-card"><div className="stat-value" style={{ color: overdueCount > 0 ? "#ef4444" : "#10b981" }}>{overdueCount}</div><div className="stat-label">Overdue</div></div>
+          </div>
+        )}
 
         <div className="action-cards">
           <button className="action-card action-submit" onClick={() => setView("submit")}>

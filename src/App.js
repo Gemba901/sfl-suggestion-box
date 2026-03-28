@@ -46,7 +46,7 @@ function App() {
   useEffect(() => {
     if (!user) return;
     requestBrowserPermission();
-    if (user.role === "Reviewer" || user.role === "Management") {
+    if (user.role === "Reviewer" || user.role === "Management" || user.role === "HOD") {
       subscribeToNewSuggestions(addNotification);
       subscribeToAllStatusChanges(user.name, addNotification);
     } else {
@@ -94,7 +94,7 @@ function App() {
 
       <div className="app-content">
         {user.role === "Employee" && <EmployeeHome user={user} />}
-        {user.role === "Reviewer" && <ReviewerHome user={user} />}
+        {(user.role === "Reviewer" || user.role === "HOD") && <ReviewerHome user={user} />}
         {user.role === "Management" && (
           <>
             {/* Toggle between Dashboard and Review mode */}

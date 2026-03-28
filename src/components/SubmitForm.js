@@ -30,7 +30,7 @@ function SubmitForm({ user, onBack, onSuccess }) {
   const [mediaPreview, setMediaPreview] = useState(null);
   const [mediaType, setMediaType] = useState(null); // "image" | "video"
 
-  const isGembaLocked = user.role === "Employee" || user.role === "Reviewer";
+  const isGembaLocked = user.role === "Employee" || user.role === "Reviewer" || user.role === "HOD";
 
   // Load gembas + QCDSMT, then try to restore draft
   useEffect(() => {
