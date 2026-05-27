@@ -1,5 +1,6 @@
 // src/App.js
 import { useState, useEffect, useCallback } from "react";
+import BEESLanding from "./components/BEESLanding";
 import Login from "./components/Login";
 import EmployeeHome from "./components/EmployeeHome";
 import ReviewerHome from "./components/ReviewerHome";
@@ -17,6 +18,7 @@ import "./App.css";
 
 function App() {
   const [user, setUser] = useState(null);
+  const [showLanding, setShowLanding] = useState(true);
   const [notifications, setNotifications] = useState([]);
   const [toast, setToast] = useState(null);
   const [dark, setDark] = useState(localStorage.getItem("sfl_dark") === "true");
@@ -62,6 +64,10 @@ function App() {
     setToast(null);
     setMgmtMode("dashboard");
     setUser(null);
+  }
+
+  if (!user && showLanding) {
+    return <BEESLanding onGetStarted={() => setShowLanding(false)} />;
   }
 
   if (!user) {
